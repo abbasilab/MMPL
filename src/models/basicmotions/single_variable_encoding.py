@@ -1,12 +1,7 @@
-import pickle
-
-import numpy as np
-import matplotlib.pyplot as plt
 import torch
 
 from ...data.data import get_ds
 from ..single_variables import SiameseContrastiveLoss, EncodingModule, SingleVariableModulesWrapper
-from ...visualizations.umap_visualizer import UMAPLatent
 
 if __name__ == "__main__":
     class_to_index={"standing":0, "running":1, "walking":2,"badminton":3}
@@ -23,7 +18,7 @@ if __name__ == "__main__":
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
     loss = SiameseContrastiveLoss()
 
-    epochs = 2500
+    epochs = 2000
     for epoch in range(epochs):
         losses = []
         for data_matrix, labels in data_load:
@@ -42,8 +37,6 @@ if __name__ == "__main__":
         avg_loss = float(sum(losses)) / float(len(losses))
         print("Epoch: ", epoch, " Average Loss: ", avg_loss)
 
-    fileobj = open("models/basicmotions/enc.dat", "wb")
-    pickle.dump(sv_modules_wrapper, fileobj)
-    fileobj.close()
+    torch.save(sv_modules_wrapper.state_dict(), "models/basicmotions/enc.dat")
     
         

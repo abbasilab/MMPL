@@ -1,19 +1,14 @@
-import pickle
-
 import torch
-import matplotlib.pyplot as plt
 
 from ...data.data import get_ds
-from ..single_variables import initialize_prototypes, prototype_diversity_penalty, prototype_similarity_penalty, encoded_space_coverage_penalty
-from ...visualizations.umap_visualizer import UMAPLatent
+from ..single_variables import SingleVariableModulesWrapper, initialize_prototypes, prototype_diversity_penalty, prototype_similarity_penalty, encoded_space_coverage_penalty
 
 if __name__ == "__main__":
     class_to_index={"standing":0, "running":1, "walking":2,"badminton":3}
     train_ds, test_ds = get_ds("data/basicmotions/BasicMotions_TRAIN.ts", class_to_index), get_ds("data/basicmotions/BasicMotions_TEST.ts", class_to_index)
 
-    fileobj = open("models/basicmotions/enc.dat", "rb")
-    sv_modules_wrapper = pickle.load(fileobj)
-    fileobj.close()
+    sv_modules_wrapper = SingleVariableModulesWrapper(6, 4, 10, 4)
+    sv_modules_wrapper.load_state_dict(torch.load("models/basicmotions/enc.dat"))
 
     # Initialize the single-variable prototypes
     initialize_prototypes(sv_modules_wrapper, train_ds)
@@ -31,14 +26,13 @@ if __name__ == "__main__":
     whole_data_iter = iter(whole_data_get)
     whole_data_tensor = next(whole_data_iter)[0]
 
-    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, sv_modules_wrapper.float().parameters()), lr=0.1)
+    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, sv_modules_wrapper.parameters()), lr=0.001)
     classification_loss_fn = torch.nn.CrossEntropyLoss()
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
 
     epochs = 2000
     for epoch in range(epochs):
         for train, label in data_train:
-            sv_modules_wrapper.zero_grad()
             pred, second_degree = sv_modules_wrapper(train.float())
             classification_loss = classification_loss_fn(pred, label)
 
@@ -93,7 +87,5 @@ if __name__ == "__main__":
 
         print("Final Accuracy: " + str(accuracy))
 
-    fileobj = open("models/basicmotions/sv_modules_wrapper.dat", "wb")
-    pickle.dump(sv_modules_wrapper, fileobj)
-    fileobj.close()
+    torch.save(sv_modules_wrapper.state_dict(), "models/basicmotions/sv_modules_wrapper.dat")
 

@@ -5,8 +5,9 @@ import torch
 
 class SiameseContrastiveLoss(torch.nn.Module):
     """The loss function computed as the siamese loss"""
-    def __init__(self):
+    def __init__(self, m):
         super().__init__()
+        self.m = m
     def forward(self, data, labels):
         batch_size = data.shape[0]
         rangeset = torch.arange(batch_size)
@@ -15,7 +16,7 @@ class SiameseContrastiveLoss(torch.nn.Module):
         opposite_labels = all_combos[(labels[all_combos[:, 0]] != labels[all_combos[:, 1]]).nonzero()].squeeze()
         same_distances = torch.norm(data[same_labels][:, 0] - data[same_labels][:, 1], dim=1)
         opposite_distances = torch.norm(data[opposite_labels][:, 0] - data[opposite_labels][:, 1], dim=1)
-        final = torch.mean(same_distances.pow(2)) + torch.mean((1.0-opposite_distances).pow(2))
+        final = torch.mean(same_distances.pow(2)) + torch.mean((self.m-opposite_distances).pow(2))
         return final
 
 class LSTMEncoder(torch.nn.Module):
@@ -48,9 +49,7 @@ class PrototypeLayerReal(torch.nn.Module):
         distances = torch.norm(distances, dim=2) ### Batch X Num
         if self.fc_layer:
             distances = self.fc_layer(distances)
-        # Add one in case distance is 0
         sim = torch.pow(1 + distances, -1)
-        # return torch.softmax(sim, 1)
         return sim
 
 class SensorLevelModule(torch.nn.Module):
