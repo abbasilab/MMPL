@@ -1,11 +1,8 @@
 import torch
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 from ...data.data import get_ds
 from ..single_variables import SingleVariableModulesWrapper
 from ..multivariable import MultivariableModule, similarity_penalty1, similarity_penalty3, diversity_penalty
-from ...visualizations.umap_visualizer import UMAPLatent
 
 if __name__ == "__main__":
     class_to_index={"standing":0, "running":1, "walking":2,"badminton":3}
@@ -66,11 +63,3 @@ if __name__ == "__main__":
         print("Final Accuracy: ", accuracy)
 
     torch.save(model.state_dict(), "models/basicmotions/multivariable_module.dat")
-
-    plt.figure()
-    sns.heatmap(torch.relu(model.aggregate_prototype_layer.protos).detach().numpy())
-    plt.xlabel("Single Variable Prototypes")
-    plt.ylabel("Multivariable Prototype Index")
-    plt.show()
-
-

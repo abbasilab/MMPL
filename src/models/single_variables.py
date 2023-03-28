@@ -33,6 +33,31 @@ class LSTMEncoder(torch.nn.Module):
         t = t[:,-1,:]
         return t
     
+class LSTMDecoder(torch.nn.Module):
+    def __init__ (self, hidden, inputsize):
+        super().__init__()
+        self.hidden = hidden
+        self.inputsize = inputsize
+        self.lstm_unit = torch.nn.LSTM(10, 50, 1, batch_first=True)
+        self.signal = torch.nn.Linear(50,100)
+    def forward(self,data):
+        return self.signal(self.lstm_unit(data)[0])
+
+class DecodingModule(torch.nn.Module):
+    def __init__(self, hidden, inputsize, num_variables):
+        super().__init__()
+        self.hidden = hidden
+        self.inputsize = inputsize
+        self.num_variables = num_variables
+        self.decoders = torch.nn.ModuleList([LSTMDecoder(hidden, inputsize) for _ in range(num_variables)])
+
+    def forward(self, data):
+        results = []
+        for i in range(self.num_variables):
+            data_subset = data[i]
+            results.append(self.decoders[i](data_subset))
+        return torch.stack(results).movedim(0, -1)
+    
 class PrototypeLayerReal(torch.nn.Module):
     """The class implementing the prototype matching layer"""
     def __init__(self, num_prototypes, hidden, num_classes, fc_layer=True):

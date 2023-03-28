@@ -16,26 +16,21 @@ if __name__ == "__main__":
     data_load = torch.utils.data.DataLoader(train_ds, len(train_ds), True)
     opt = torch.optim.Adam(params=encoding_module.parameters(), lr=0.01)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
-    loss = SiameseContrastiveLoss()
+    loss = SiameseContrastiveLoss(m=1.0)
 
     epochs = 2000
     for epoch in range(epochs):
-        losses = []
         for data_matrix, labels in data_load:
-            encoding_module.zero_grad()
             output = encoding_module(data_matrix.float())
 
             total_loss = 0
             for i in range(encoding_module.num_variables):
                 total_loss += loss(output[i], labels)
-            losses.append(float(total_loss))
             opt.zero_grad()
             total_loss.backward()
             opt.step()
         sched.step()
-
-        avg_loss = float(sum(losses)) / float(len(losses))
-        print("Epoch: ", epoch, " Average Loss: ", avg_loss)
+        print("Epoch: ", epoch, " Total Loss: ", float(total_loss))
 
     torch.save(sv_modules_wrapper.state_dict(), "models/basicmotions/enc.dat")
     
