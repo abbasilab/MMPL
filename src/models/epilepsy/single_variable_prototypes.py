@@ -1,17 +1,15 @@
 import torch
-import numpy as np
-import matplotlib.pyplot as plt
 
 from ...data.data import get_ds
 from ..single_variables import (SingleVariableModulesWrapper, initialize_prototypes,
                                 prototype_diversity_penalty, prototype_similarity_penalty, encoded_space_coverage_penalty)
-from ...visualizations.umap_visualizer import UMAPLatent
 
 if __name__ == "__main__":
     class_to_index={"epilepsy":0, "walking":1, "running":2,"sawing":3}
     train_ds, test_ds = get_ds("data/epilepsy/Epilepsy_TRAIN.ts", class_to_index), get_ds("data/epilepsy/Epilepsy_TEST.ts", class_to_index)
 
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=20, num_prototypes=6)
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=40, num_prototypes=4)
+
     sv_modules_wrapper.load_state_dict(torch.load("models/epilepsy/enc.dat"))
 
     # Initialize the single-variable prototypes
@@ -32,7 +30,7 @@ if __name__ == "__main__":
     classification_loss_fn = torch.nn.CrossEntropyLoss()
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
 
-    epochs = 2000
+    epochs = 700
     for epoch in range(epochs):
         for train, label in data_train:
             pred, second_degree = sv_modules_wrapper(train.float())
@@ -52,8 +50,8 @@ if __name__ == "__main__":
             
             total_loss = (1.)*classification_loss +                  \
                         (1.)*prototype_similarity_penalty_term +    \
-                        (10.)*encoded_space_coverage_penalty_term +  \
-                        (10.)*prototype_diversity_penalty_term
+                        (5.)*encoded_space_coverage_penalty_term +  \
+                        (5.)*prototype_diversity_penalty_term
             
             opt.zero_grad()
             total_loss.backward()
@@ -90,15 +88,3 @@ if __name__ == "__main__":
         print("Final Accuracy: " + str(accuracy))
 
     torch.save(sv_modules_wrapper.state_dict(), "models/epilepsy/sv_modules_wrapper.dat")
-
-    visualize_moment = torch.utils.data.DataLoader(train_ds, len(train_ds))
-    for train_sample  in visualize_moment:
-            inp, out = train_sample[0].detach(), train_sample[1].detach()
-            num_vars = inp.shape[-1]
-            for i in range(3):
-                embeddings = sv_modules_wrapper.single_variable_modules[i].encoder(inp[:,:,i].unsqueeze(2).float())
-                embeddings = torch.concat([embeddings, sv_modules_wrapper.single_variable_modules[i].protolayer.prototype_matrix], dim=0)
-                out = torch.concat([out, 4*torch.ones((sv_modules_wrapper.single_variable_modules[i].protolayer.prototype_matrix.shape[0],))], dim=0)
-                visualizer = UMAPLatent()
-                visualizer.visualize(embeddings, out, len(class_to_index))
-    plt.show()

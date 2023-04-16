@@ -8,29 +8,31 @@ if __name__ == "__main__":
     class_to_index={"epilepsy":0, "walking":1, "running":2,"sawing":3}
     train_ds, test_ds = get_ds("data/epilepsy/Epilepsy_TRAIN.ts", class_to_index), get_ds("data/epilepsy/Epilepsy_TEST.ts", class_to_index)
 
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=20, num_prototypes=6)
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=40, num_prototypes=4)
     sv_modules_wrapper.load_state_dict(torch.load("models/epilepsy/sv_modules_wrapper.dat"))
 
     model = MultivariableModule(single_variable_modules=sv_modules_wrapper.single_variable_modules, \
-                                 num_variables=3, hidden=18, num_classes=4, num_prototypes=4)
+                                 num_variables=3, hidden=12, num_classes=4, num_prototypes=4)
+
     model.initialize_prototypes(train_ds)
 
-    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.1)
+    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.01)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
     classification_loss = torch.nn.CrossEntropyLoss()
 
     data_train = torch.utils.data.DataLoader(train_ds, len(train_ds), True)
     data_test = torch.utils.data.DataLoader(test_ds, len(test_ds), True)
 
-    epochs = 2000
+    epochs = 700
     for epoch in range(epochs):
         for train, label in data_train:
             pred, second_degree = model(train.float())
 
             class_loss = classification_loss(pred, label)
-            total_loss = (1.)*class_loss + (1.)*similarity_penalty1(second_degree, model.aggregate_prototype_layer.protos) + \
-                (1.)*similarity_penalty3(second_degree, model.aggregate_prototype_layer.protos) + \
-                    (1.)*diversity_penalty(model.aggregate_prototype_layer.protos)
+            total_loss = (1.)*class_loss + \
+                         (0.3)*similarity_penalty1(second_degree, model.aggregate_prototype_layer.protos) + \
+                         (0.9)*similarity_penalty3(second_degree, model.aggregate_prototype_layer.protos) + \
+                         (5.)*diversity_penalty(model.aggregate_prototype_layer.protos)
 
             opt.zero_grad()
             total_loss.backward()
@@ -63,5 +65,3 @@ if __name__ == "__main__":
         print("Final Accuracy: ", accuracy)
 
     torch.save(model.state_dict(), "models/epilepsy/multivariable_module.dat")
-
-

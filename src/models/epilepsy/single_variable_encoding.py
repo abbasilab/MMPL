@@ -1,13 +1,13 @@
 import torch
-import numpy as np
+
 from ...data.data import get_ds
 from ..single_variables import SingleVariableModulesWrapper, EncodingModule, SiameseContrastiveLoss
 
 if __name__ == "__main__":
     class_to_index={"epilepsy":0, "walking":1, "running":2,"sawing":3}
     train_ds, test_ds = get_ds("data/epilepsy/Epilepsy_TRAIN.ts", class_to_index), get_ds("data/epilepsy/Epilepsy_TEST.ts", class_to_index)
-    
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=20, num_prototypes=6)
+
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=40, num_prototypes=4)
     encoding_module = EncodingModule(torch.nn.ModuleList([sv_module.encoder for sv_module in sv_modules_wrapper.single_variable_modules]))
 
     data_load = torch.utils.data.DataLoader(train_ds, len(train_ds), True)
@@ -30,4 +30,3 @@ if __name__ == "__main__":
         print("Epoch: ", epoch, " Total Loss: ", float(total_loss))
 
     torch.save(sv_modules_wrapper.state_dict(), "models/epilepsy/enc.dat")
-

@@ -27,11 +27,11 @@ class LSTMEncoder(torch.nn.Module):
         self.hidden_size = hidden
         self.lstm_unit = torch.nn.LSTM(input_size,hidden,3,batch_first=True)
         self.linear1 = torch.nn.Linear(hidden, hidden)
-        self.linear2 = torch.nn.Linear(hidden,hidden)
+        # self.linear2 = torch.nn.Linear(hidden,hidden)
     def forward(self, data):
         t, hidden = self.lstm_unit(data)
         t = t[:,-1,:]
-        return t
+        return self.linear1(t)
     
 class LSTMDecoder(torch.nn.Module):
     def __init__ (self, hidden, inputsize):
