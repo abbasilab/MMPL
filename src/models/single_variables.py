@@ -38,8 +38,8 @@ class LSTMDecoder(torch.nn.Module):
         super().__init__()
         self.hidden = hidden
         self.inputsize = inputsize
-        self.lstm_unit = torch.nn.LSTM(10, 50, 1, batch_first=True)
-        self.signal = torch.nn.Linear(50,100)
+        self.lstm_unit = torch.nn.LSTM(hidden, inputsize, 1, batch_first=True)
+        self.signal = torch.nn.Linear(inputsize, inputsize)
     def forward(self,data):
         return self.signal(self.lstm_unit(data)[0])
 
