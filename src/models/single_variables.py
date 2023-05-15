@@ -16,7 +16,9 @@ class SiameseContrastiveLoss(torch.nn.Module):
         opposite_labels = all_combos[(labels[all_combos[:, 0]] != labels[all_combos[:, 1]]).nonzero()].squeeze()
         same_distances = torch.norm(data[same_labels][:, 0] - data[same_labels][:, 1], dim=1)
         opposite_distances = torch.norm(data[opposite_labels][:, 0] - data[opposite_labels][:, 1], dim=1)
-        final = torch.mean(same_distances.pow(2)) + torch.mean((self.m-opposite_distances).pow(2))
+        same_loss = 0.5*torch.sum(same_distances.pow(2))
+        opposite_loss = 0.5*torch.sum(torch.max(torch.tensor(0), self.m - opposite_distances).pow(2))
+        final = same_loss + opposite_loss
         return final
 
 class LSTMEncoder(torch.nn.Module):
@@ -34,14 +36,18 @@ class LSTMEncoder(torch.nn.Module):
         return self.linear1(t)
     
 class LSTMDecoder(torch.nn.Module):
-    def __init__ (self, hidden, inputsize):
+    def __init__ (self, hidden, seq_len):
         super().__init__()
         self.hidden = hidden
-        self.inputsize = inputsize
-        self.lstm_unit = torch.nn.LSTM(hidden, inputsize, 1, batch_first=True)
-        self.signal = torch.nn.Linear(inputsize, inputsize)
+        self.seq_len = seq_len
+        self.lstm_unit = torch.nn.LSTM(input_size=1, hidden_size=seq_len, num_layers=3, batch_first=True)
+        self.signal = torch.nn.Linear(seq_len, seq_len)
     def forward(self,data):
-        return self.signal(self.lstm_unit(data)[0])
+        data = data.unsqueeze(2)
+        x, (hidden_n, cell_n) = self.lstm_unit(data)
+        x = x[:, -1, :]
+        x = self.signal(x)
+        return x
 
 class DecodingModule(torch.nn.Module):
     def __init__(self, hidden, inputsize, num_variables):
