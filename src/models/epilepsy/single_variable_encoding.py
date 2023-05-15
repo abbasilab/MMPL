@@ -13,17 +13,18 @@ if __name__ == "__main__":
     data_load = torch.utils.data.DataLoader(train_ds, len(train_ds), True)
     opt = torch.optim.Adam(params=encoding_module.parameters(), lr=0.01)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
-    loss = SiameseContrastiveLoss(m=1.0)
+    contrastive_loss_fn = SiameseContrastiveLoss(m=1.0)
+    batch_size = 32
 
-    epochs = 2000
+    epochs = 1500
     for epoch in range(epochs):
         for data_matrix, labels in data_load:
-            output = encoding_module(data_matrix.float())
-
+            opt.zero_grad()
+            indices = torch.randperm(len(data_matrix))[:batch_size]
+            output = encoding_module(data_matrix[indices].float())
             total_loss = 0
             for i in range(encoding_module.num_variables):
-                total_loss += loss(output[i], labels)
-            opt.zero_grad()
+                total_loss += contrastive_loss_fn(output[i], labels[indices])
             total_loss.backward()
             opt.step()
         sched.step()
