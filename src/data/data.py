@@ -20,3 +20,16 @@ def get_ds(file, class_to_index):
         dataset.append(tuple([stacked,class_to_index[y[example]]]))
 
     return BenchmarkDataset(dataset)
+
+def filter_classes(ds, classes):
+    data = ds.data
+    filtered = []
+    for point in data:
+        if point[1] in classes:
+            new_point = [None, None]
+            new_point[0] = point[0]
+            new_point[1] = classes.index(point[1])
+            filtered.append(new_point)
+    
+    filtered_ds = BenchmarkDataset(filtered)
+    return filtered_ds
