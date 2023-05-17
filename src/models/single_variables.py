@@ -84,7 +84,7 @@ class PrototypeLayerReal(torch.nn.Module):
         return sim
 
 class SensorLevelModule(torch.nn.Module):
-    def __init__(self, hidden, num_prototypes):
+    def __init__(self, hidden, num_prototypes, encoder=True):
         super().__init__()
         self.hidden = hidden
         self.num_prototypes = num_prototypes
@@ -188,9 +188,10 @@ def initialize_prototypes(sv_modules_wrapper, data):
                         min_distance = float("inf")
                         for k in range(j):
                             prototype = protolayer.prototype_matrix[k]
-                            min_distance = min(min_distance, torch.norm(point - prototype))
+                            min_distance = min(min_distance, torch.linalg.vector_norm(point - prototype))
                         distances.append(float(min_distance))
                     probabilities = np.array(distances)
+                    probabilities = np.square(probabilities)
                     probabilities = probabilities / probabilities.sum()
 
                     # Step 3: Choose an element at random to be the next prototype with prob proportional to distance

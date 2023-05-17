@@ -6,6 +6,72 @@ from ...visualizations.umap_visualizer import UMAPLatent
 from ...data.data import get_ds, filter_classes
 from ..single_variables import SingleVariableModulesWrapper, initialize_prototypes, prototype_diversity_penalty, prototype_similarity_penalty, encoded_space_coverage_penalty
 
+class LSTMEncoder(torch.nn.Module):
+    def __init__(self, input_size, hidden):
+        super(LSTMEncoder, self).__init__()
+        self.input_size = input_size
+        self.hidden = hidden
+
+        self.lstm = torch.nn.LSTM(input_size=1, hidden_size=hidden, num_layers=1, batch_first=True)
+        self.lstm1 = torch.nn.LSTM(input_size=1, hidden_size=2*hidden, num_layers=1, batch_first=True)
+        self.lstm2 = torch.nn.LSTM(input_size=1, hidden_size=hidden, num_layers=1, batch_first=True)
+        self.linear = torch.nn.Linear(in_features=hidden, out_features=hidden)
+
+    def forward(self, x):
+        x, (hidden_n, cell_n) = self.lstm(x)
+        x = x[:, -1, :]
+        x = self.linear(x)
+        return x
+    
+class LSTMDecoder(torch.nn.Module):
+    def __init__(self, input_size, hidden):
+        super(LSTMDecoder, self).__init__()
+        self.input_size = input_size
+        self.hidden = hidden
+
+        self.lstm = torch.nn.LSTM(input_size=1, hidden_size=input_size, num_layers=1, batch_first=True)
+        self.lstm1 = torch.nn.LSTM(input_size=1, hidden_size=2*hidden, num_layers=1, batch_first=True)
+        self.lstm2 = torch.nn.LSTM(input_size=1, hidden_size=input_size, num_layers=1, batch_first=True)
+        self.linear = torch.nn.Linear(in_features=input_size, out_features=input_size)
+
+    def forward(self, x):
+        x = x.unsqueeze(2)
+        x, (hidden_n, cell_n) = self.lstm(x)
+        x = x[:, -1, :]
+        x = self.linear(x)
+        return x
+
+
+class SingleVariableAutoencoder(torch.nn.Module):
+    def __init__(self, input_size, hidden):
+        super(SingleVariableAutoencoder, self).__init__()
+        self.input_size = input_size
+        self.hidden = hidden
+
+        self.encoder = LSTMEncoder(input_size, hidden)
+        self.decoder = LSTMDecoder(input_size, hidden)
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        decoded = self.decoder(encoded)
+        return decoded, encoded
+    
+class EncodingModule(torch.nn.Module):
+    def __init__(self, module_list):
+        super().__init__()
+        self.module_list = module_list
+        self.num_variables = len(module_list)
+    
+    def forward(self, data):
+        encoder_results = []
+        decoder_results = []
+        for i in range(self.num_variables):
+            data_subset = data[:, :, i]
+            decoded, encoded = self.module_list[i](data_subset.unsqueeze(2))
+            encoder_results.append(encoded)
+            decoder_results.append(decoded)
+        return decoder_results, encoder_results
+
 if __name__ == "__main__":
     class_to_index = {
         "1":1, "2":2, "3":3, "4":4, "5":5, "6":6, "7":7, "8":8,
@@ -15,93 +81,92 @@ if __name__ == "__main__":
     
     train_ds, test_ds = get_ds("data/charactertrajectories/CharacterTrajectoriesEq_TRAIN.ts", class_to_index), get_ds("data/charactertrajectories/CharacterTrajectoriesEq_TEST.ts", class_to_index)
     filtered_train, filtered_test = filter_classes(train_ds, [2, 4, 12, 13]), filter_classes(test_ds, [2, 4, 12, 13])
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=20, num_prototypes=4)
-    sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories/enc_bdpq.dat"))
+    
+    autoencoders = []
+    for i in range(3):
+        autoencoders.append(SingleVariableAutoencoder(119, 10))
+    encoding_module = EncodingModule(torch.nn.ModuleList(autoencoders))
+    encoding_module.load_state_dict(torch.load("models/charactertrajectories/autoenc.dat"))
+    
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=6)
+
+    for i in range(3):
+        sv_modules_wrapper.single_variable_modules[i].encoder = encoding_module.module_list[i].encoder
 
     # Initialize the single-variable prototypes
-    # initialize_prototypes(sv_modules_wrapper, train_ds)
-    # initialize_prototypes(sv_modules_wrapper, filtered_train)
+    initialize_prototypes(sv_modules_wrapper, filtered_train)
 
-    # # Disable gradients for the encoders
-    # for i in range(sv_modules_wrapper.num_variables):
-    #     for param in sv_modules_wrapper.single_variable_modules[i].encoder.parameters():
-    #         param.requires_grad = False
+    # Disable gradients for the encoders
+    for i in range(3):
+        for param in sv_modules_wrapper.single_variable_modules[i].encoder.parameters():
+            param.requires_grad = False
 
-    
+    data_train = torch.utils.data.DataLoader(filtered_train, len(filtered_train), True)
+    data_test = torch.utils.data.DataLoader(filtered_test, len(filtered_test), True)
+    whole_data_get = torch.utils.data.DataLoader(filtered_train,len(filtered_train),False)
+    whole_data_iter = iter(whole_data_get)
+    whole_data_tensor = next(whole_data_iter)[0]
 
-    # # data_train = torch.utils.data.DataLoader(train_ds, len(train_ds), True)
-    # # data_test = torch.utils.data.DataLoader(test_ds, len(test_ds), True)
-    # # whole_data_get = torch.utils.data.DataLoader(train_ds,len(train_ds),False)
-    # data_train = torch.utils.data.DataLoader(filtered_train, len(filtered_train), True)
-    # data_test = torch.utils.data.DataLoader(filtered_test, len(filtered_test), True)
-    # whole_data_get = torch.utils.data.DataLoader(filtered_train,len(filtered_train),False)
-    # whole_data_iter = iter(whole_data_get)
-    # whole_data_tensor = next(whole_data_iter)[0]
+    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, sv_modules_wrapper.parameters()), lr=0.01)
+    classification_loss_fn = torch.nn.CrossEntropyLoss()
+    sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
 
-    # opt = torch.optim.Adam(filter(lambda x: x.requires_grad, sv_modules_wrapper.parameters()), lr=0.001)
-    # classification_loss_fn = torch.nn.CrossEntropyLoss()
-    # sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
+    epochs = 2000
+    for epoch in tqdm(range(epochs)):
+        for train, label in data_train:
+            pred, second_degree = sv_modules_wrapper(train.float())
+            classification_loss = classification_loss_fn(pred, label)
 
-    # epochs = 1000
-    # for epoch in tqdm(range(epochs)):
-    #     for train, label in data_train:
-    #         pred, second_degree = sv_modules_wrapper(train.float())
-    #         classification_loss = classification_loss_fn(pred, label)
-
-    #         embeddings = []
-    #         for i in range(sv_modules_wrapper.num_variables):
-    #             embeddings.append(sv_modules_wrapper.single_variable_modules[i](train[:, :, i].unsqueeze(2).float()))
-
-    #         prototype_similarity_penalty_term = 0
-    #         encoded_space_coverage_penalty_term = 0
-    #         prototype_diversity_penalty_term = 0
-    #         for i in range(sv_modules_wrapper.num_variables):
-    #             prototype_similarity_penalty_term += prototype_similarity_penalty(whole_data_tensor[:, :, i].unsqueeze(2).float(), sv_modules_wrapper.single_variable_modules[i])
-    #             encoded_space_coverage_penalty_term += encoded_space_coverage_penalty(whole_data_tensor[:, :, i].unsqueeze(2).float(), sv_modules_wrapper.single_variable_modules[i])
-    #             prototype_diversity_penalty_term += prototype_diversity_penalty(sv_modules_wrapper.single_variable_modules[i].protolayer.prototype_matrix)
+            prototype_similarity_penalty_term = 0
+            encoded_space_coverage_penalty_term = 0
+            prototype_diversity_penalty_term = 0
+            for i in range(sv_modules_wrapper.num_variables):
+                prototype_similarity_penalty_term += prototype_similarity_penalty(whole_data_tensor[:, :, i].unsqueeze(2).float(), sv_modules_wrapper.single_variable_modules[i])
+                encoded_space_coverage_penalty_term += encoded_space_coverage_penalty(whole_data_tensor[:, :, i].unsqueeze(2).float(), sv_modules_wrapper.single_variable_modules[i])
+                prototype_diversity_penalty_term += prototype_diversity_penalty(sv_modules_wrapper.single_variable_modules[i].protolayer.prototype_matrix)
             
-    #         total_loss = (1.)*classification_loss +                  \
-    #                     (1.)*prototype_similarity_penalty_term +    \
-    #                     (10.)*encoded_space_coverage_penalty_term +  \
-    #                     (5.)*prototype_diversity_penalty_term
+            total_loss = (1.)*classification_loss +                  \
+                        (1.)*prototype_similarity_penalty_term +    \
+                        (1.)*encoded_space_coverage_penalty_term +  \
+                        (10.)*prototype_diversity_penalty_term
             
-    #         opt.zero_grad()
-    #         total_loss.backward()
-    #         opt.step()
-    #     sched.step()
+            opt.zero_grad()
+            total_loss.backward()
+            opt.step()
+        sched.step()
 
-    #     if epoch % 50 == 0:
-    #         with torch.no_grad():
-    #             numerator = 0
-    #             denominator = 0
-    #             for test, label in data_test:
-    #                 aggregate_features, reject = sv_modules_wrapper(test.float())
-    #                 sof = torch.softmax(aggregate_features, 1)
-    #                 prediction = torch.argmax(sof, 1)
+        if epoch % 50 == 0:
+            with torch.no_grad():
+                numerator = 0
+                denominator = 0
+                for test, label in data_test:
+                    aggregate_features, reject = sv_modules_wrapper(test.float())
+                    sof = torch.softmax(aggregate_features, 1)
+                    prediction = torch.argmax(sof, 1)
 
-    #                 numerator += torch.sum(prediction.eq(label).int())
-    #                 denominator += test.shape[0]
-    #             accuracy = float(numerator) / float(denominator)
+                    numerator += torch.sum(prediction.eq(label).int())
+                    denominator += test.shape[0]
+                accuracy = float(numerator) / float(denominator)
 
-    #             print("Epoch: " + str(epoch) + " Accuracy: " + str(accuracy) + " Loss: ", str(total_loss.item()))
+                print("Epoch: " + str(epoch) + " Accuracy: " + str(accuracy) + " Loss: ", str(total_loss.item()))
     
-    # with torch.no_grad():
-    #     numerator = 0
-    #     denominator = 0
-    #     for test, label in data_test:
-    #         aggregate_features, reject = sv_modules_wrapper(test.float())
-    #         sof = torch.softmax(aggregate_features, 1)
-    #         prediction = torch.argmax(sof, 1)
+    with torch.no_grad():
+        numerator = 0
+        denominator = 0
+        for test, label in data_test:
+            aggregate_features, reject = sv_modules_wrapper(test.float())
+            sof = torch.softmax(aggregate_features, 1)
+            prediction = torch.argmax(sof, 1)
 
-    #         numerator += torch.sum(prediction.eq(label).int())
-    #         denominator += test.shape[0]
-    #     accuracy = float(numerator) / float(denominator)
+            numerator += torch.sum(prediction.eq(label).int())
+            denominator += test.shape[0]
+        accuracy = float(numerator) / float(denominator)
 
-    #     print("Final Accuracy: " + str(accuracy))
+        print("Final Accuracy: " + str(accuracy))
 
-    # torch.save(sv_modules_wrapper.state_dict(), "models/charactertrajectories/sv_modules_wrapper_bdpq.dat")
+    torch.save(sv_modules_wrapper.state_dict(), "models/charactertrajectories/sv_modules_wrapper.dat")
 
-    sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories/sv_modules_wrapper_bdpq.dat"))
+    sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories/sv_modules_wrapper.dat"))
 
     visualize_moment = torch.utils.data.DataLoader(filtered_test, len(filtered_test))
     for train_sample  in visualize_moment:
