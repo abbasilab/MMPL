@@ -88,7 +88,7 @@ if __name__ == "__main__":
     encoding_module = EncodingModule(torch.nn.ModuleList(autoencoders))
     encoding_module.load_state_dict(torch.load("models/charactertrajectories/autoenc.dat"))
     
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=6)
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=5)
 
     for i in range(3):
         sv_modules_wrapper.single_variable_modules[i].encoder = encoding_module.module_list[i].encoder
@@ -127,8 +127,8 @@ if __name__ == "__main__":
             
             total_loss = (1.)*classification_loss +                  \
                         (1.)*prototype_similarity_penalty_term +    \
-                        (1.)*encoded_space_coverage_penalty_term +  \
-                        (10.)*prototype_diversity_penalty_term
+                        (10.)*encoded_space_coverage_penalty_term +  \
+                        (1.)*prototype_diversity_penalty_term
             
             opt.zero_grad()
             total_loss.backward()
