@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 from ...data.data import get_ds, filter_classes
 from ..single_variables import SingleVariableModulesWrapper
 from ..multivariable import MultivariableModule, similarity_penalty1, similarity_penalty3, diversity_penalty
-from ...visualizations.umap_visualizer import UMAPLatent
 
 class LSTMEncoder(torch.nn.Module):
     def __init__(self, input_size, hidden):
@@ -93,21 +92,14 @@ if __name__ == "__main__":
         sv_modules_wrapper.single_variable_modules[i].encoder = encoding_module.module_list[i].encoder
     sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories_filtered/sv_modules_wrapper.dat"))
 
-    visualize_moment = torch.utils.data.DataLoader(filtered_test, len(filtered_test))
-    for train_sample  in visualize_moment:
-            inp, out = train_sample[0].detach(), train_sample[1].detach()
-            num_vars = inp.shape[-1]
-            for i in range(3):
-                embeddings = sv_modules_wrapper.single_variable_modules[i].encoder(inp[:,:,i].unsqueeze(2).float())
-                embeddings = torch.concat([embeddings, sv_modules_wrapper.single_variable_modules[i].protolayer.prototype_matrix], dim=0)
-                out = torch.concat([out, 4*torch.ones((sv_modules_wrapper.single_variable_modules[i].protolayer.prototype_matrix.shape[0],))], dim=0)
-                visualizer = UMAPLatent()
-                visualizer.visualize(embeddings, out, 4)
-    plt.show()
-
     model = MultivariableModule(single_variable_modules=sv_modules_wrapper.single_variable_modules, \
                                  num_variables=3, hidden=15, num_classes=4, num_prototypes=4)
     model.initialize_prototypes(filtered_train)
+    sns.heatmap(torch.relu(model.aggregate_prototype_layer.protos).detach().numpy())
+    plt.show()
+    choice = input()
+    if choice == "n":
+        exit()
 
     opt = torch.optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.01)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
