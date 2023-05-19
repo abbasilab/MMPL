@@ -132,8 +132,8 @@ class SingleVariableModulesWrapper(torch.nn.Module):
         concat_features = torch.cat(concat_features, dim=1)
 
         aggregate_features = self.linear1(concat_features)
-        aggregate_features = torch.nn.ELU()(aggregate_features)
-        aggregate_features = self.linear2(aggregate_features)
+        # aggregate_features = torch.nn.ELU()(aggregate_features)
+        # aggregate_features = self.linear2(aggregate_features)
         return aggregate_features, concat_features
 
 def prototype_similarity_penalty(data, single_variable_module):
