@@ -22,8 +22,7 @@ def get_multivariable_prototype_classes(model, train_ds):
                         min_dist = dist
                         index = j
                 proto_class_map[index].append(labels[i].item())
-    
-    classes = [max(set(arr)) for arr in proto_class_map.values()]
+    classes = [max(set(arr), key=arr.count) for arr in proto_class_map.values()]
     return classes
 
             
