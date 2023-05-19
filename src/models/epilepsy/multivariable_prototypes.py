@@ -1,5 +1,6 @@
 import torch
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 from ...data.data import get_ds
 from ..single_variables import SingleVariableModulesWrapper
 from ..multivariable import MultivariableModule, similarity_penalty1, similarity_penalty3, diversity_penalty
@@ -15,6 +16,11 @@ if __name__ == "__main__":
                                  num_variables=3, hidden=12, num_classes=4, num_prototypes=4)
 
     model.initialize_prototypes(train_ds)
+    sns.heatmap(model.aggregate_prototype_layer.protos.detach().numpy())
+    plt.show()
+    choice = input()
+    if choice == "n":
+        exit()
 
     opt = torch.optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.01)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
