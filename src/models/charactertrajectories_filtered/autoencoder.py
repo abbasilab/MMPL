@@ -104,7 +104,7 @@ if __name__ == "__main__":
             for i in range(encoding_module.num_variables):
                 contrastive_loss += contrastive_loss_fn(encoder_output[i], labels[indices])
                 reconstruction_loss += reconstruction_loss_fn(decoder_output[i], data_matrix[indices][:, :, i].float())
-            total_loss = (0.0005)*contrastive_loss + (1.0)*reconstruction_loss
+            total_loss = (1.0)*contrastive_loss + (0.)*reconstruction_loss
             total_loss.backward()
             opt.step()
         sched.step()

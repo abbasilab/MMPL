@@ -6,8 +6,8 @@ from matplotlib.lines import Line2D
 import seaborn as sns
 
 from ..data.data import get_ds, filter_classes
-from ..models.charactertrajectories_filtered.autoencoder import SingleVariableAutoencoder, EncodingModule
-from ..models.single_variables import SingleVariableModulesWrapper, DecodingModule
+from ..models.charactertrajectories_filtered.single_variable_encoding import LSTMEncoder
+from ..models.single_variables import EncodingModule, SingleVariableModulesWrapper
 from ..models.multivariable import MultivariableModule
 from .umap_visualizer import UMAPLatent
 from .utils import get_multivariable_prototype_classes
@@ -24,15 +24,13 @@ def sv_prototypes_visualization():
     train_ds, test_ds = get_ds("data/charactertrajectories/CharacterTrajectoriesEq_TRAIN.ts", class_to_index), get_ds("data/charactertrajectories/CharacterTrajectoriesEq_TEST.ts", class_to_index)
     filtered_train, filtered_test = filter_classes(train_ds, [2, 4, 12, 13]), filter_classes(test_ds, [2, 4, 12, 13])
 
-    autoencoders = []
-    for i in range(3):
-        autoencoders.append(SingleVariableAutoencoder(119, 10))
-    encoding_module = EncodingModule(torch.nn.ModuleList(autoencoders))
-    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/autoenc.dat"))
+    encoding_module = EncodingModule(torch.nn.ModuleList([LSTMEncoder(119, 10) for _ in range(3)]))
+    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/enc.dat"))
 
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=5)
-    for i in range(3):
-        sv_modules_wrapper.single_variable_modules[i].encoder = encoding_module.module_list[i].encoder
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=4)
+    for i in range(len(sv_modules_wrapper.single_variable_modules)):
+        module = sv_modules_wrapper.single_variable_modules[i]
+        module.encoder = encoding_module.module_list[i]
     sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories_filtered/sv_modules_wrapper.dat"))
 
     fig, axes = plt.subplots(1, 3, figsize=(5,2.5))
@@ -94,19 +92,17 @@ def heatmap():
     index_to_class = {
         0:"b", 1:"d", 2:"p", 3:"q"
     }
-    autoencoders = []
-    for i in range(3):
-        autoencoders.append(SingleVariableAutoencoder(119, 10))
-    encoding_module = EncodingModule(torch.nn.ModuleList(autoencoders))
-    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/autoenc.dat"))
+    encoding_module = EncodingModule(torch.nn.ModuleList([LSTMEncoder(119, 10) for _ in range(3)]))
+    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/enc.dat"))
 
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=5)
-    for i in range(3):
-        sv_modules_wrapper.single_variable_modules[i].encoder = encoding_module.module_list[i].encoder
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=4)
+    for i in range(len(sv_modules_wrapper.single_variable_modules)):
+        module = sv_modules_wrapper.single_variable_modules[i]
+        module.encoder = encoding_module.module_list[i]
     sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories_filtered/sv_modules_wrapper.dat"))
 
     model = MultivariableModule(single_variable_modules=sv_modules_wrapper.single_variable_modules, \
-                                 num_variables=3, hidden=15, num_classes=4, num_prototypes=4)
+                                 num_variables=3, hidden=12, num_classes=4, num_prototypes=4)
     model.load_state_dict(torch.load("models/charactertrajectories_filtered/multivariable_module.dat"))
 
     protos = model.aggregate_prototype_layer.protos
@@ -120,17 +116,16 @@ def heatmap():
     class_names = [index_to_class[i] for i in classes]
 
     xticklabels = [
-        "x", "", "", "", "",
-        "y", "", "", "", "",
-        "Pen Tip Force", "", "", "", ""
+        "x", "", "", "",
+        "y", "", "", "",
+        "Pen Tip Force", "", "", ""
     ]
-
     fig = plt.figure(figsize=(6,3))
     sns.set(font_scale=0.75)
     ax = sns.heatmap(scaled_protos.detach().numpy(), xticklabels=xticklabels, yticklabels=class_names, cbar_kws={"ticks":[0,0.5,1]}, )
     plt.yticks(rotation=0)
     plt.xticks(rotation=0, ha="center")
-    dx = 36/72.; dy = 0/72. 
+    dx = 33/72.; dy = 0/72. 
     offset = transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
     for label in ax.xaxis.get_majorticklabels():
         label.set_transform(label.get_transform() + offset)
@@ -154,19 +149,17 @@ def multivariable_prototypes_closest_training_point():
     index_to_class = {
         0:"b", 1:"d", 2:"p", 3:"q"
     }
-    autoencoders = []
-    for i in range(3):
-        autoencoders.append(SingleVariableAutoencoder(119, 10))
-    encoding_module = EncodingModule(torch.nn.ModuleList(autoencoders))
-    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/autoenc.dat"))
+    encoding_module = EncodingModule(torch.nn.ModuleList([LSTMEncoder(119, 10) for _ in range(3)]))
+    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/enc.dat"))
 
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=5)
-    for i in range(3):
-        sv_modules_wrapper.single_variable_modules[i].encoder = encoding_module.module_list[i].encoder
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=4)
+    for i in range(len(sv_modules_wrapper.single_variable_modules)):
+        module = sv_modules_wrapper.single_variable_modules[i]
+        module.encoder = encoding_module.module_list[i]
     sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories_filtered/sv_modules_wrapper.dat"))
 
     model = MultivariableModule(single_variable_modules=sv_modules_wrapper.single_variable_modules, \
-                                 num_variables=3, hidden=15, num_classes=4, num_prototypes=4)
+                                 num_variables=3, hidden=12, num_classes=4, num_prototypes=4)
     model.load_state_dict(torch.load("models/charactertrajectories_filtered/multivariable_module.dat"))
 
     protos = model.aggregate_prototype_layer.protos
@@ -236,4 +229,4 @@ def multivariable_prototypes_closest_training_point():
 
 
 if __name__ == "__main__":
-    multivariable_prototypes_closest_training_point()
+    heatmap()

@@ -122,7 +122,6 @@ class SingleVariableModulesWrapper(torch.nn.Module):
 
         # Used just for training the single variable modules
         self.linear1 = torch.nn.Linear(num_variables * num_prototypes, 2 * num_variables * num_prototypes)
-        self.linear2 = torch.nn.Linear(2 * num_variables * num_prototypes, num_classes)
 
     def forward(self, data):
         concat_features = []
@@ -132,8 +131,6 @@ class SingleVariableModulesWrapper(torch.nn.Module):
         concat_features = torch.cat(concat_features, dim=1)
 
         aggregate_features = self.linear1(concat_features)
-        # aggregate_features = torch.nn.ELU()(aggregate_features)
-        # aggregate_features = self.linear2(aggregate_features)
         return aggregate_features, concat_features
 
 def prototype_similarity_penalty(data, single_variable_module):

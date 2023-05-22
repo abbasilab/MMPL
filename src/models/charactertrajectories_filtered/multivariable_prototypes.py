@@ -3,74 +3,9 @@ from tqdm import tqdm
 import seaborn as sns
 import matplotlib.pyplot as plt
 from ...data.data import get_ds, filter_classes
-from ..single_variables import SingleVariableModulesWrapper
+from ..single_variables import EncodingModule, SingleVariableModulesWrapper
 from ..multivariable import MultivariableModule, similarity_penalty1, similarity_penalty3, diversity_penalty
-
-class LSTMEncoder(torch.nn.Module):
-    def __init__(self, input_size, hidden):
-        super(LSTMEncoder, self).__init__()
-        self.input_size = input_size
-        self.hidden = hidden
-
-        self.lstm = torch.nn.LSTM(input_size=1, hidden_size=hidden, num_layers=1, batch_first=True)
-        self.lstm1 = torch.nn.LSTM(input_size=1, hidden_size=2*hidden, num_layers=1, batch_first=True)
-        self.lstm2 = torch.nn.LSTM(input_size=1, hidden_size=hidden, num_layers=1, batch_first=True)
-        self.linear = torch.nn.Linear(in_features=hidden, out_features=hidden)
-
-    def forward(self, x):
-        x, (hidden_n, cell_n) = self.lstm(x)
-        x = x[:, -1, :]
-        x = self.linear(x)
-        return x
-    
-class LSTMDecoder(torch.nn.Module):
-    def __init__(self, input_size, hidden):
-        super(LSTMDecoder, self).__init__()
-        self.input_size = input_size
-        self.hidden = hidden
-
-        self.lstm = torch.nn.LSTM(input_size=1, hidden_size=input_size, num_layers=1, batch_first=True)
-        self.lstm1 = torch.nn.LSTM(input_size=1, hidden_size=2*hidden, num_layers=1, batch_first=True)
-        self.lstm2 = torch.nn.LSTM(input_size=1, hidden_size=input_size, num_layers=1, batch_first=True)
-        self.linear = torch.nn.Linear(in_features=input_size, out_features=input_size)
-
-    def forward(self, x):
-        x = x.unsqueeze(2)
-        x, (hidden_n, cell_n) = self.lstm(x)
-        x = x[:, -1, :]
-        x = self.linear(x)
-        return x
-
-
-class SingleVariableAutoencoder(torch.nn.Module):
-    def __init__(self, input_size, hidden):
-        super(SingleVariableAutoencoder, self).__init__()
-        self.input_size = input_size
-        self.hidden = hidden
-
-        self.encoder = LSTMEncoder(input_size, hidden)
-        self.decoder = LSTMDecoder(input_size, hidden)
-
-    def forward(self, x):
-        encoded = self.encoder(x)
-        decoded = self.decoder(encoded)
-        return decoded, encoded
-    
-class EncodingModule(torch.nn.Module):
-    def __init__(self, module_list):
-        super().__init__()
-        self.module_list = module_list
-        self.num_variables = len(module_list)
-    
-    def forward(self, data):
-        encoder_results = []
-        decoder_results = []
-        for i in range(self.num_variables):
-            data_subset = data[:, :, i]
-            decoded, encoded = self.module_list[i](data_subset.unsqueeze(2))
-            encoder_results.append(encoded)
-            decoder_results.append(decoded)
-        return decoder_results, encoder_results
+from .single_variable_encoding import LSTMEncoder
 
 if __name__ == "__main__":
     class_to_index = {
@@ -81,19 +16,17 @@ if __name__ == "__main__":
     train_ds, test_ds = get_ds("data/charactertrajectories/CharacterTrajectoriesEq_TRAIN.ts", class_to_index), get_ds("data/charactertrajectories/CharacterTrajectoriesEq_TEST.ts", class_to_index)
     filtered_train, filtered_test = filter_classes(train_ds, [2, 4, 12, 13]), filter_classes(test_ds, [2, 4, 12, 13])
 
-    autoencoders = []
-    for i in range(3):
-        autoencoders.append(SingleVariableAutoencoder(119, 10))
-    encoding_module = EncodingModule(torch.nn.ModuleList(autoencoders))
-    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/autoenc.dat"))
+    encoding_module = EncodingModule(torch.nn.ModuleList([LSTMEncoder(119, 10) for _ in range(3)]))
+    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/enc.dat"))
 
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=5)
-    for i in range(3):
-        sv_modules_wrapper.single_variable_modules[i].encoder = encoding_module.module_list[i].encoder
+    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=10, num_prototypes=4)
+    for i in range(len(sv_modules_wrapper.single_variable_modules)):
+        module = sv_modules_wrapper.single_variable_modules[i]
+        module.encoder = encoding_module.module_list[i]
     sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories_filtered/sv_modules_wrapper.dat"))
 
     model = MultivariableModule(single_variable_modules=sv_modules_wrapper.single_variable_modules, \
-                                 num_variables=3, hidden=15, num_classes=4, num_prototypes=4)
+                                 num_variables=3, hidden=12, num_classes=4, num_prototypes=4)
     model.initialize_prototypes(filtered_train)
     sns.heatmap(torch.relu(model.aggregate_prototype_layer.protos).detach().numpy())
     plt.show()
@@ -105,8 +38,6 @@ if __name__ == "__main__":
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
     classification_loss = torch.nn.CrossEntropyLoss()
 
-    # data_train = torch.utils.data.DataLoader(train_ds, len(train_ds), True)
-    # data_test = torch.utils.data.DataLoader(test_ds, len(test_ds), True)
     data_train = torch.utils.data.DataLoader(filtered_train, len(filtered_train), True)
     data_test = torch.utils.data.DataLoader(filtered_test, len(filtered_test), True)
 

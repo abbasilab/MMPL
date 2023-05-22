@@ -1,9 +1,24 @@
 import torch
 import matplotlib.pyplot as plt
-import random
+
 from ...data.data import get_ds, filter_classes
-from ..single_variables import SiameseContrastiveLoss, EncodingModule, SingleVariableModulesWrapper
+from ..single_variables import SiameseContrastiveLoss, EncodingModule
 from ...visualizations.umap_visualizer import UMAPLatent
+
+class LSTMEncoder(torch.nn.Module):
+    def __init__(self, input_size, hidden):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden = hidden
+
+        self.lstm = torch.nn.LSTM(input_size=1, hidden_size=hidden, num_layers=2, batch_first=True)
+        self.linear = torch.nn.Linear(in_features=hidden, out_features=hidden)
+
+    def forward(self, x):
+        x, (hidden_n, cell_n) = self.lstm(x)
+        x = x[:, -1, :]
+        x = self.linear(x)
+        return x
 
 if __name__ == "__main__":
     class_to_index = {
@@ -14,43 +29,37 @@ if __name__ == "__main__":
     
     train_ds, test_ds = get_ds("data/charactertrajectories/CharacterTrajectoriesEq_TRAIN.ts", class_to_index), get_ds("data/charactertrajectories/CharacterTrajectoriesEq_TEST.ts", class_to_index)
     filtered_train, filtered_test = filter_classes(train_ds, [2, 4, 12, 13]), filter_classes(test_ds, [2, 4, 12, 13])
-    
-    sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=3, num_classes=4, hidden=20, num_prototypes=4)
 
-    # Initialize an encoding module for each variable
-    encoding_module = EncodingModule(torch.nn.ModuleList([sv_module.encoder for sv_module in sv_modules_wrapper.single_variable_modules]))
+    encoders = [LSTMEncoder(119, 10) for _  in range(3)]
+    encoding_module = EncodingModule(torch.nn.ModuleList(encoders))
 
     data_load = torch.utils.data.DataLoader(filtered_train, len(filtered_train), True)
-    # data_load = torch.utils.data.DataLoader(train_ds, len(train_ds), True)
     opt = torch.optim.Adam(params=encoding_module.parameters(), lr=0.01)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
     loss = SiameseContrastiveLoss(m=1.0)
 
-    # epochs = 2000
-    # for epoch in range(epochs):
-    #     for data_matrix, labels in data_load:
-    #         output = encoding_module(data_matrix.float())
+    epochs = 2000
+    for epoch in range(epochs):
+        for data_matrix, labels in data_load:
+            output = encoding_module(data_matrix.float())
 
-    #         total_loss = 0
-    #         for i in range(encoding_module.num_variables):
-    #             total_loss += loss(output[i], labels)
-    #         opt.zero_grad()
-    #         total_loss.backward()
-    #         opt.step()
-    #     sched.step()
-    #     print("Epoch: ", epoch, " Total Loss: ", float(total_loss))
+            total_loss = 0
+            for i in range(encoding_module.num_variables):
+                total_loss += loss(output[i], labels)
+            opt.zero_grad()
+            total_loss.backward()
+            opt.step()
+        sched.step()
+        print("Epoch: ", epoch, " Total Loss: ", float(total_loss))
 
-    # torch.save(sv_modules_wrapper.state_dict(), "models/charactertrajectories/enc_bdpq.dat")
+    torch.save(encoding_module.state_dict(), "models/charactertrajectories_filtered/enc.dat")
 
-    sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories/enc_bdpq.dat"))
+    encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/enc.dat"))
     visualize_moment = torch.utils.data.DataLoader(filtered_test, len(filtered_test))
-    # visualize_moment = torch.utils.data.DataLoader(test_ds, len(test_ds))
-    for train_sample  in visualize_moment:
+    for train_sample in visualize_moment:
             inp, out = train_sample[0].detach(), train_sample[1].detach()
-            out = out - 1
-            num_vars = inp.shape[-1]
             for i in range(3):
-                embeddings = sv_modules_wrapper.single_variable_modules[i].encoder(inp[:,:,i].unsqueeze(2).float())
+                embeddings = encoding_module.module_list[i](inp[:,:,i].unsqueeze(2).float())
                 visualizer = UMAPLatent()
                 visualizer.visualize(embeddings, out, 4)
     plt.show()
