@@ -55,8 +55,8 @@ class SingleVariableAutoencoder(torch.nn.Module):
 if __name__ == "__main__":
     class_to_index={"Pattern 1":0, "Pattern 2":1, "Pattern 3":2,"Pattern 4":3}
     
-    train_ds, class_descriptor = get_simulated_ds(1)
-    test_ds, _ = get_simulated_ds(1)
+    train_ds, class_descriptor = get_simulated_ds(5)
+    test_ds, _ = get_simulated_ds(5)
     print(len(train_ds))
 
     # Initialize an encoding module for each variable
@@ -66,11 +66,10 @@ if __name__ == "__main__":
     data_load = torch.utils.data.DataLoader(train_ds, len(train_ds), False)
     opt = torch.optim.Adam(params=encoding_module.parameters(), lr=0.01)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
-    # loss = SiameseContrastiveLoss(m=0.1)
-    loss = torch.nn.MSELoss
+    loss = SiameseContrastiveLoss(m=0.1)
     batch_size = len(train_ds)
 
-    epochs = 500
+    epochs = 300
     for epoch in range(epochs):
         for data_matrix, labels in data_load:
             # indices = torch.randperm(len(data_matrix))[:batch_size]
