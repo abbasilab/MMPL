@@ -2,6 +2,8 @@ import numpy as np
 import torch
 from sktime.datasets import load_from_tsfile_to_dataframe
 
+from .simulated import DataMiningSimulatedDataset, DataMiningData
+
 class BenchmarkDataset(torch.utils.data.Dataset):
     def __init__(self, data):
         self.data = data
@@ -20,6 +22,12 @@ def get_ds(file, class_to_index):
         dataset.append(tuple([stacked,class_to_index[y[example]]]))
 
     return BenchmarkDataset(dataset)
+
+def get_simulated_ds(reps):
+    sim = DataMiningSimulatedDataset()
+    data, class_descriptor = sim.generate_dataset(reps)
+    dataset_object = DataMiningData(data)
+    return dataset_object, class_descriptor
 
 def filter_classes(ds, classes):
     data = ds.data

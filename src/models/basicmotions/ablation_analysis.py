@@ -4,7 +4,6 @@ from ...data.data import get_ds
 from ..single_variables import (
     SiameseContrastiveLoss, EncodingModule, SingleVariableModulesWrapper, 
     initialize_prototypes, prototype_diversity_penalty, prototype_similarity_penalty, encoded_space_coverage_penalty)
-from ..multivariable import MultivariableModule, similarity_penalty1, similarity_penalty3, diversity_penalty
 
 if __name__ == "__main__":
     accuracies = []
@@ -34,7 +33,6 @@ if __name__ == "__main__":
                 total_loss.backward()
                 opt.step()
             sched.step()
-            # print("Epoch: ", epoch, " Total Loss: ", float(total_loss))
 
         # Initialize the single-variable prototypes
         initialize_prototypes(sv_modules_wrapper, train_ds)
@@ -96,8 +94,6 @@ if __name__ == "__main__":
                         numerator += torch.sum(prediction.eq(label).int())
                         denominator += test.shape[0]
                     accuracy = float(numerator) / float(denominator)
-
-                    # print("Epoch: " + str(epoch) + " Accuracy: " + str(accuracy) + " Loss: ", str(total_loss.item()))
         
         with torch.no_grad():
             numerator = 0
@@ -110,58 +106,6 @@ if __name__ == "__main__":
                 numerator += torch.sum(prediction.eq(label).int())
                 denominator += test.shape[0]
             accuracy = float(numerator) / float(denominator)
-
-            # print("Final Accuracy: " + str(accuracy))
-
-        model = MultivariableModule(single_variable_modules=sv_modules_wrapper.single_variable_modules, \
-                                    num_variables=6, hidden=24, num_classes=4, num_prototypes=4)
-        model.initialize_prototypes(train_ds)
-        
-        opt = torch.optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.1)
-        sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
-        classification_loss = torch.nn.CrossEntropyLoss()
-
-        data_train = torch.utils.data.DataLoader(train_ds, 64, True)
-        data_test = torch.utils.data.DataLoader(test_ds, 64, True)
-
-        epochs = 2000
-        for epoch in range(epochs):
-            for train, label in data_train:
-                pred, second_degree = model(train.float())
-
-                class_loss = classification_loss(pred, label)
-                total_loss = (1.)*class_loss + (1.)*similarity_penalty1(second_degree, model.aggregate_prototype_layer.protos) + \
-                    (1.)*similarity_penalty3(second_degree, model.aggregate_prototype_layer.protos) + \
-                        (1.)*diversity_penalty(model.aggregate_prototype_layer.protos)
-
-                opt.zero_grad()
-                total_loss.backward()
-                opt.step()
-            sched.step()
-
-            if epoch % 50 == 0:
-                with torch.no_grad():
-                    numerator = 0
-                    denominator = 0
-                    for test, label in data_test:
-                        pred, reject = model(test.float())
-                        sof = torch.softmax(pred, 1)
-                        prediction = torch.argmax(sof, 1)
-                        numerator += torch.sum(prediction.eq(label).int())
-                        denominator += test.shape[0]
-                    accuracy = float(numerator/denominator)
-                    # print("Epoch: ", epoch, "Accuracy: ", accuracy, "Loss: ", float(total_loss))
-        
-        with torch.no_grad():
-            numerator = 0
-            denominator = 0
-            for test, label in data_test:
-                pred, reject = model(test.float())
-                sof = torch.softmax(pred, 1)
-                prediction = torch.argmax(sof, 1)
-                numerator += torch.sum(prediction.eq(label).int())
-                denominator += test.shape[0]
-            accuracy = float(numerator/denominator)
             print("Final Accuracy: ", accuracy)
             accuracies.append(accuracy)
     print(torch.std_mean(torch.tensor(accuracies)))

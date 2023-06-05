@@ -33,7 +33,7 @@ def sv_prototypes_visualization():
         module.encoder = encoding_module.module_list[i]
     sv_modules_wrapper.load_state_dict(torch.load("models/charactertrajectories_filtered/sv_modules_wrapper.dat"))
 
-    fig, axes = plt.subplots(1, 3, figsize=(5,2.5))
+    fig, axes = plt.subplots(1, 3, figsize=(5,2))
     colors = ["red", "blue", "green", "orange", "magenta"]
     titles = ["x", "y", "Pen Tip Force"]
 
@@ -76,7 +76,8 @@ def sv_prototypes_visualization():
     fig.tight_layout()
     fig.subplots_adjust(bottom=0.165)
     fig.align_ylabels(axes)
-    plt.savefig("figures/charactertrajectories_filtered/sv_latent_space.pdf", dpi=300)
+    plt.show()
+    # plt.savefig("figures/charactertrajectories_filtered/sv_latent_space.pdf", dpi=300)
 
 def heatmap():
     class_to_index = {
@@ -229,4 +230,4 @@ def multivariable_prototypes_closest_training_point():
 
 
 if __name__ == "__main__":
-    heatmap()
+    sv_prototypes_visualization()
