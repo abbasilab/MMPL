@@ -97,6 +97,8 @@ if __name__ == "__main__":
                 act = []
                 for label in out:
                     act.append(class_descriptor[label][1][i])
+            else:
+                act = torch.zeros(len(out))
             visualizer = UMAPLatent()
             visualizer.visualize(embeddings, torch.FloatTensor(act), len(class_to_index))
     plt.show()
