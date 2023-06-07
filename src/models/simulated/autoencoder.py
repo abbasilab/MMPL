@@ -55,8 +55,8 @@ class SingleVariableAutoencoder(torch.nn.Module):
 if __name__ == "__main__":
     class_to_index={"Pattern 1":0, "Pattern 2":1, "Pattern 3":2,"Pattern 4":3}
     
-    train_ds, class_descriptor = get_simulated_ds(100)
-    test_ds, _ = get_simulated_ds(100)
+    train_ds, class_descriptor = get_simulated_ds(1)
+    test_ds, _ = get_simulated_ds(1)
     print(len(train_ds))
 
     # Initialize an encoding module for each variable
@@ -66,10 +66,11 @@ if __name__ == "__main__":
     data_load = torch.utils.data.DataLoader(train_ds, len(train_ds), False)
     opt = torch.optim.Adam(params=encoding_module.parameters(), lr=0.01)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
-    loss = SiameseContrastiveLoss(m=0.1)
+    # loss = SiameseContrastiveLoss(m=0.1)
+    loss = torch.nn.MSELoss
     batch_size = len(train_ds)
 
-    epochs = 1000
+    epochs = 500
     for epoch in range(epochs):
         for data_matrix, labels in data_load:
             # indices = torch.randperm(len(data_matrix))[:batch_size]
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     torch.save(encoding_module.state_dict(), "models/simulated/enc.dat")
 
     encoding_module.load_state_dict(torch.load("models/simulated/enc.dat"))
-    visualize_moment = torch.utils.data.DataLoader(test_ds, len(test_ds), True)
+    visualize_moment = torch.utils.data.DataLoader(train_ds, len(train_ds), True)
     for train_sample in visualize_moment:
         inp, out = train_sample[0].detach(), train_sample[1].detach()
         for i in range(4):
@@ -97,10 +98,8 @@ if __name__ == "__main__":
                 act = []
                 for label in out:
                     act.append(class_descriptor[label][1][i])
-            else:
-                act = torch.zeros(len(out))
             visualizer = UMAPLatent()
-            visualizer.visualize(embeddings, torch.FloatTensor(act), 4)
+            visualizer.visualize(embeddings, torch.FloatTensor(act), len(class_to_index))
     plt.show()
     
         

@@ -61,7 +61,7 @@ if __name__ == "__main__":
     whole_data_iter = iter(whole_data_get)
     whole_data_tensor = next(whole_data_iter)[0]
 
-    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, sv_modules_wrapper.parameters()), lr=0.01)
+    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, sv_modules_wrapper.parameters()), lr=0.1)
     classification_loss_fn = torch.nn.CrossEntropyLoss()
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
 
