@@ -17,7 +17,7 @@ if __name__ == "__main__":
 
     encoders = [LSTMEncoder(100, 30) for _  in range(4)]
     encoding_module = EncodingModule(torch.nn.ModuleList(encoders))
-    encoding_module.load_state_dict(torch.load("models/simulated/enc.dat"))
+    encoding_module.load_state_dict(torch.load("models/simulated_binary/enc.dat"))
 
     sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=4, num_classes=2, hidden=30, num_prototypes=2)
     for i in range(len(sv_modules_wrapper.single_variable_modules)):
@@ -118,9 +118,9 @@ if __name__ == "__main__":
 
         print("Final Accuracy: " + str(accuracy))
 
-    torch.save(sv_modules_wrapper.state_dict(), "models/simulated/sv_modules_wrapper.dat")
+    torch.save(sv_modules_wrapper.state_dict(), "models/simulated_binary/sv_modules_wrapper.dat")
 
-    sv_modules_wrapper.load_state_dict(torch.load("models/simulated/sv_modules_wrapper.dat"))
+    sv_modules_wrapper.load_state_dict(torch.load("models/simulated_binary/sv_modules_wrapper.dat"))
 
     visualize_moment = torch.utils.data.DataLoader(test_ds, len(test_ds))
     for train_sample in visualize_moment:

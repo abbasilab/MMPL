@@ -19,13 +19,13 @@ if __name__ == "__main__":
 
     encoders = [LSTMEncoder(100, 30) for _  in range(4)]
     encoding_module = EncodingModule(torch.nn.ModuleList(encoders))
-    encoding_module.load_state_dict(torch.load("models/simulated/enc.dat"))
+    encoding_module.load_state_dict(torch.load("models/simulated_binary/enc.dat"))
 
     sv_modules_wrapper = SingleVariableModulesWrapper(num_variables=4, num_classes=2, hidden=30, num_prototypes=2)
     for i in range(len(sv_modules_wrapper.single_variable_modules)):
             module = sv_modules_wrapper.single_variable_modules[i]
             module.encoder = encoding_module.module_list[i]
-    sv_modules_wrapper.load_state_dict(torch.load("models/simulated/sv_modules_wrapper.dat"))
+    sv_modules_wrapper.load_state_dict(torch.load("models/simulated_binary/sv_modules_wrapper.dat"))
 
     model = MultivariableModule(single_variable_modules=sv_modules_wrapper.single_variable_modules, \
                                  num_variables=4, hidden=8, num_classes=8, num_prototypes=8)
@@ -84,8 +84,8 @@ if __name__ == "__main__":
         accuracy = float(numerator/denominator)
         print("Final Accuracy: ", accuracy)
 
-    torch.save(model.state_dict(), "models/simulated/multivariable_module.dat")
+    torch.save(model.state_dict(), "models/simulated_binary/multivariable_module.dat")
 
-    model.load_state_dict(torch.load("models/simulated/multivariable_module.dat"))
+    model.load_state_dict(torch.load("models/simulated_binary/multivariable_module.dat"))
     sns.heatmap(torch.relu(model.aggregate_prototype_layer.protos).detach().numpy())
     plt.show()

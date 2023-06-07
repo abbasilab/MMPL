@@ -51,6 +51,7 @@ class SingleVariableAutoencoder(torch.nn.Module):
 
     def forward(self, x):
         encoded = self.encoder(x)
+        # Maybe don't just throw encoder output into decoder, bc it's not necessarily a time series
         decoded = self.decoder(encoded)
         return decoded, encoded
     

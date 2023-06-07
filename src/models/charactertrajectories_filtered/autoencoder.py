@@ -93,25 +93,25 @@ if __name__ == "__main__":
     reconstruction_loss_fn = torch.nn.MSELoss()
     batch_size = len(filtered_train)
 
-    epochs = 2000
-    for epoch in range(epochs):
-        for data_matrix, labels in data_load:
-            opt.zero_grad()
-            indices = torch.randperm(len(data_matrix))[:batch_size]
-            decoder_output, encoder_output = encoding_module(data_matrix[indices].float())
-            contrastive_loss = 0
-            reconstruction_loss = 0
-            for i in range(encoding_module.num_variables):
-                contrastive_loss += contrastive_loss_fn(encoder_output[i], labels[indices])
-                reconstruction_loss += reconstruction_loss_fn(decoder_output[i], data_matrix[indices][:, :, i].float())
-            total_loss = (1.0)*contrastive_loss + (0.)*reconstruction_loss
-            total_loss.backward()
-            opt.step()
-        sched.step()
-        print("Epoch: ", epoch, " Total Loss: ", float(total_loss),
-               "Contrastive Loss: ", float(contrastive_loss), "Reconstruction Loss: ", float(reconstruction_loss))
+    # epochs = 2000
+    # for epoch in range(epochs):
+    #     for data_matrix, labels in data_load:
+    #         opt.zero_grad()
+    #         indices = torch.randperm(len(data_matrix))[:batch_size]
+    #         decoder_output, encoder_output = encoding_module(data_matrix[indices].float())
+    #         contrastive_loss = 0
+    #         reconstruction_loss = 0
+    #         for i in range(encoding_module.num_variables):
+    #             contrastive_loss += contrastive_loss_fn(encoder_output[i], labels[indices])
+    #             reconstruction_loss += reconstruction_loss_fn(decoder_output[i], data_matrix[indices][:, :, i].float())
+    #         total_loss = (0.0005)*contrastive_loss + (1.)*reconstruction_loss
+    #         total_loss.backward()
+    #         opt.step()
+    #     sched.step()
+    #     print("Epoch: ", epoch, " Total Loss: ", float(total_loss),
+    #            "Contrastive Loss: ", float(contrastive_loss), "Reconstruction Loss: ", float(reconstruction_loss))
 
-    torch.save(encoding_module.state_dict(), "models/charactertrajectories_filtered/autoenc.dat")
+    # torch.save(encoding_module.state_dict(), "models/charactertrajectories_filtered/autoenc.dat")
 
     encoding_module.load_state_dict(torch.load("models/charactertrajectories_filtered/autoenc.dat"))
     data_train = torch.utils.data.DataLoader(filtered_train, len(filtered_train), True)

@@ -12,7 +12,7 @@ class LSTMEncoder(torch.nn.Module):
         self.input_size = input_size
         self.hidden = hidden
 
-        self.lstm = torch.nn.LSTM(input_size=1, hidden_size=hidden, num_layers=2, batch_first=True)
+        self.lstm = torch.nn.LSTM(input_size=1, hidden_size=hidden, num_layers=3, batch_first=True)
         self.linear = torch.nn.Linear(in_features=hidden, out_features=hidden)
 
     def forward(self, x):
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     loss = SiameseContrastiveLoss(m=0.1)
     batch_size = len(train_ds)
 
-    epochs = 1000
+    epochs = 500
     for epoch in range(epochs):
         for data_matrix, labels in data_load:
             # indices = torch.randperm(len(data_matrix))[:batch_size]
@@ -85,9 +85,9 @@ if __name__ == "__main__":
         sched.step()
         print("Epoch: ", epoch, " Total Loss: ", float(total_loss))
 
-    torch.save(encoding_module.state_dict(), "models/simulated/enc.dat")
+    torch.save(encoding_module.state_dict(), "models/simulated_binary/enc.dat")
 
-    encoding_module.load_state_dict(torch.load("models/simulated/enc.dat"))
+    encoding_module.load_state_dict(torch.load("models/simulated_binary/enc.dat"))
     visualize_moment = torch.utils.data.DataLoader(test_ds, len(test_ds), True)
     for train_sample in visualize_moment:
         inp, out = train_sample[0].detach(), train_sample[1].detach()
