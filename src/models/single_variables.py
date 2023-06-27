@@ -66,7 +66,7 @@ class DecodingModule(torch.nn.Module):
     
 class PrototypeLayerReal(torch.nn.Module):
     """The class implementing the prototype matching layer"""
-    def __init__(self, num_prototypes, hidden, num_classes, fc_layer=True):
+    def __init__(self, num_prototypes, hidden, num_classes, fc_layer=False):
         super().__init__()
         self.num_prototypes = num_prototypes
         self.prototype_matrix = torch.nn.Parameter(torch.zeros(num_prototypes, hidden))
@@ -121,8 +121,7 @@ class SingleVariableModulesWrapper(torch.nn.Module):
             self.single_variable_modules.append(SensorLevelModule(hidden, num_prototypes))
 
         # Used just for training the single variable modules
-        self.linear1 = torch.nn.Linear(num_variables * num_prototypes, 2 * num_variables * num_prototypes)
-
+        self.linear1 = torch.nn.Linear(num_variables * num_prototypes, num_classes)
     def forward(self, data):
         concat_features = []
         for i in range(self.num_variables):

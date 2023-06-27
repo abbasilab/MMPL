@@ -41,3 +41,10 @@ def filter_classes(ds, classes):
     
     filtered_ds = BenchmarkDataset(filtered)
     return filtered_ds
+
+if __name__ == "__main__":
+    train_ds, _ = get_simulated_ds(10)
+    torch.save(train_ds, "data/simulated/train_10.dat")
+
+    test_ds, _ = get_simulated_ds(10)
+    torch.save(test_ds, "data/simulated/test_10.dat")

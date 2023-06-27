@@ -13,7 +13,6 @@ class FrequencyDomainVariable:
         self.active_frequency = active_frequency
         self.inactive_frequency = inactive_frequencies
     def sample_active(self, active):
-        active = 4*active
         return np.sin((np.random.normal(active, 0.1)) * np.linspace(0, 2 * math.pi,100) + np.random.rand() * 2 * math.pi)+np.random.normal(0.0,0.1,100)
     def sample_inactive(self):
         current_frequency = random.choice(self.inactive_frequency)
@@ -29,14 +28,14 @@ class ShiftVariantVariable:
         if pattern_type==0:
             shiftone = np.random.randint(0, 10)
             return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0, 0.1, 100)
-        # if pattern_type == 1:
-        #         shiftone = np.random.randint(25, 35)
-        #         return np.concatenate(
-        #             [np.zeros(shiftone), (0.5 + np.random.rand()) * self.g1, np.zeros(100 - (shiftone + 20))]) + np.random.normal(0, 0.1, 100)
-        # if pattern_type==2:
-        #     shiftone = np.random.randint(50, 60)
-        #     return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0, 0.1, 100)
-        if pattern_type==1:
+        if pattern_type == 1:
+                shiftone = np.random.randint(25, 35)
+                return np.concatenate(
+                    [np.zeros(shiftone), (0.5 + np.random.rand()) * self.g1, np.zeros(100 - (shiftone + 20))]) + np.random.normal(0, 0.1, 100)
+        if pattern_type==2:
+            shiftone = np.random.randint(50, 60)
+            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0, 0.1, 100)
+        if pattern_type==3:
             shiftone = np.random.randint(75, 80)
             return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0, 0.1, 100)
     def sample_inactive(self):
@@ -66,17 +65,17 @@ class ShiftInvariantVariable:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g1, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g1,
                             np.zeros(100 - (shiftone + 45))]) + np.random.normal(0, 0.1, 100)
-        # if pattern_type == 1:
-        #     shiftone = np.random.randint(0, 55)
-        #     return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g1, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g2,
-        #                     np.zeros(100 - (shiftone + 45))]) + np.random.normal(0, 0.1, 100)
-
-        # if pattern_type == 2:
-        #     shiftone = np.random.randint(0, 55)
-        #     return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g2, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g1,
-        #                     np.zeros(100 - (shiftone + 45))]) + np.random.normal(0, 0.1, 100)
-
         if pattern_type == 1:
+            shiftone = np.random.randint(0, 55)
+            return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g1, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g2,
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0, 0.1, 100)
+
+        if pattern_type == 2:
+            shiftone = np.random.randint(0, 55)
+            return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g2, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g1,
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0, 0.1, 100)
+
+        if pattern_type == 3:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g2, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g2,
                             np.zeros(100 - (shiftone + 45))]) + np.random.normal(0, 0.1, 100)
@@ -118,7 +117,7 @@ class DataMiningSimulatedDataset:
         self.variables.append(ShiftVariantVariable(0, inactive))
         self.variables.append(FrequencyDomainVariable(0, inactive))
         self.variables.append(IrrelevantVariable())
-        self.active_variables = list(enumerate(sorted(list(itertools.product(range(2), repeat=3)))))
+        self.active_variables = list(enumerate(sorted(list(itertools.product(range(4), repeat=3)))))
     def generate_dataset(self,reps):
         complete_dataset = list()
         for classif in self.active_variables:

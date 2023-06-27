@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from ...data.data import get_simulated_ds
+from ...data.simulated import DataMiningData
 from ..single_variables import SiameseContrastiveLoss, EncodingModule
 from ...visualizations.umap_visualizer import UMAPLatent
 
@@ -54,10 +55,11 @@ class SingleVariableAutoencoder(torch.nn.Module):
 
 if __name__ == "__main__":
     class_to_index={"Pattern 1":0, "Pattern 2":1, "Pattern 3":2,"Pattern 4":3}
-    
-    train_ds, class_descriptor = get_simulated_ds(100)
-    test_ds, _ = get_simulated_ds(100)
-    print(len(train_ds))
+
+    train_ds = torch.load("data/simulated_binary/train_10.dat")
+    print(type(train_ds[0][0][0][0]), train_ds[0][0][0][0])
+    test_ds = torch.load("data/simulated_binary/test_10.dat")
+    _, class_descriptor = get_simulated_ds(10)
 
     # Initialize an encoding module for each variable
     encoders = [LSTMEncoder(100, 30) for _  in range(4)]
@@ -69,11 +71,11 @@ if __name__ == "__main__":
     loss = SiameseContrastiveLoss(m=0.1)
     batch_size = len(train_ds)
 
-    epochs = 500
+    epochs = 400
     for epoch in range(epochs):
         for data_matrix, labels in data_load:
-            # indices = torch.randperm(len(data_matrix))[:batch_size]
-            # output = encoding_module(data_matrix[indices].float())
+            print(data_matrix.size())
+            exit()
             output = encoding_module(data_matrix.float())
 
             total_loss = 0
@@ -85,9 +87,9 @@ if __name__ == "__main__":
         sched.step()
         print("Epoch: ", epoch, " Total Loss: ", float(total_loss))
 
-    torch.save(encoding_module.state_dict(), "models/simulated_binary/enc.dat")
+    torch.save(encoding_module.state_dict(), "models/simulated/enc_10.dat")
 
-    encoding_module.load_state_dict(torch.load("models/simulated_binary/enc.dat"))
+    encoding_module.load_state_dict(torch.load("models/simulated/enc_10.dat"))
     visualize_moment = torch.utils.data.DataLoader(test_ds, len(test_ds), True)
     for train_sample in visualize_moment:
         inp, out = train_sample[0].detach(), train_sample[1].detach()
