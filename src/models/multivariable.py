@@ -60,7 +60,8 @@ class MultivariableModule(torch.nn.Module):
                     # Select with probability proportional to min distance to existing prototypes
                     found = False
                     while not found:
-                        candidate = np.random.choice(list(concat_features), p=probabilities)
+                        index = np.random.choice([ind for ind in range(len(concat_features))], p=probabilities)
+                        candidate = concat_features[index]
                         if candidate not in self.aggregate_prototype_layer.protos:
                             found = True
                     self.aggregate_prototype_layer.protos[i] = candidate

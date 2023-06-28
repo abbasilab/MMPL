@@ -41,12 +41,12 @@ if __name__ == "__main__":
             with torch.no_grad():
                 numerator = 0
                 denominator = 0
-                for test, label in data_test:
-                    pred, reject = model(test.float())
+                for train, label in data_train:
+                    pred, reject = model(train.float())
                     sof = torch.softmax(pred, 1)
                     prediction = torch.argmax(sof, 1)
                     numerator += torch.sum(prediction.eq(label).int())
-                    denominator += test.shape[0]
+                    denominator += train.shape[0]
                 accuracy = float(numerator/denominator)
                 print("Epoch: ", epoch, "Accuracy: ", accuracy, "Loss: ", float(total_loss))
     

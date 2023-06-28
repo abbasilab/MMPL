@@ -193,7 +193,8 @@ def initialize_prototypes(sv_modules_wrapper, data):
                     # Step 3: Choose an element at random to be the next prototype with prob proportional to distance
                     found = False
                     while not found:
-                        candidate = np.random.choice(list(encodings), p=probabilities)
+                        index = np.random.choice([ind for ind in range(len(encodings))], p=probabilities)
+                        candidate = encodings[index]
                         if candidate not in protolayer.prototype_matrix:
                             found = True
                     protolayer.prototype_matrix[j] = candidate
