@@ -25,7 +25,8 @@ class UMAPLatent:
         colors = ["red", "blue", "yellow", "green", "magenta"]
         for i in range(X.shape[0]):
             classif = classes[i]
-            plt.plot(X[i, 0], X[i, 1], marker='o'if classif!=N else '*', color=colors[int(classif.item())] if classif!=N else 'magenta', alpha=0.3 if classif!=N else 1.0)
+            plt.plot(X[i, 0], X[i, 1], marker='o'if classif!=N else '*', color=colors[int(classif.item())] if classif!=N else 'magenta', alpha=0.3 if classif!=N else 1.0,
+                     markeredgecolor="none" if classif!=N else "k")
         if prototype_matrix is not None:
           prototype_embedding = trans.transform(prototype_matrix)
           for i in range(len(prototype_embedding)):

@@ -34,7 +34,7 @@ if __name__ == "__main__":
     if choice == "n":
         exit()
 
-    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.01)
+    opt = torch.optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=0.001)
     sched = torch.optim.lr_scheduler.ExponentialLR(opt, 0.999)
     classification_loss = torch.nn.CrossEntropyLoss()
 
@@ -49,8 +49,8 @@ if __name__ == "__main__":
             class_loss = classification_loss(pred, label)
             total_loss = (1.)*class_loss + \
                          (1.)*similarity_penalty1(second_degree, model.aggregate_prototype_layer.protos) + \
-                         (1.)*similarity_penalty3(second_degree, model.aggregate_prototype_layer.protos) + \
-                         (5.)*diversity_penalty(model.aggregate_prototype_layer.protos)
+                         (10.)*similarity_penalty3(second_degree, model.aggregate_prototype_layer.protos) + \
+                         (1.)*diversity_penalty(model.aggregate_prototype_layer.protos)
 
             opt.zero_grad()
             total_loss.backward()

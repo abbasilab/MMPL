@@ -42,7 +42,7 @@ if __name__ == "__main__":
     data_train = torch.utils.data.DataLoader(train_ds, 64, True)
     data_test = torch.utils.data.DataLoader(test_ds, 64, True)
 
-    epochs = 250
+    epochs = 500
     for epoch in tqdm(range(epochs)):
         for train, label in data_train:
             pred, second_degree = model(train.float())
