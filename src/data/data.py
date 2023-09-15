@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 from sktime.datasets import load_from_tsfile_to_dataframe
+from sklearn.preprocessing import StandardScaler
 
 from .simulated import DataMiningSimulatedDataset, DataMiningData
 
@@ -41,6 +42,35 @@ def filter_classes(ds, classes):
     
     filtered_ds = BenchmarkDataset(filtered)
     return filtered_ds
+
+def normalize(dataset):
+    """
+    ds = BenchmarkDataset
+    """
+    num_variables = dataset[0][0].shape[1]  # Get number of variables from the first sample
+    means = np.zeros(num_variables)
+    stds = np.zeros(num_variables)
+
+    # Compute mean and standard deviation for each variable
+    for var in range(num_variables):
+        all_data_var = np.concatenate([sample[0][:, var] for sample in dataset])
+        means[var] = np.mean(all_data_var)
+        stds[var] = np.std(all_data_var)
+
+    # Normalize each time series in the dataset
+    normalized_dataset = []
+    for time_series, label in dataset:
+        normalized_time_series = np.zeros(time_series.shape)
+        for var in range(num_variables):
+            normalized_time_series[:, var] = (time_series[:, var] - means[var]) / stds[var]
+        normalized_dataset.append((normalized_time_series, label))
+
+    return BenchmarkDataset(normalized_dataset)
+
+def get_normalized_ds(file, class_to_index):
+    ds = get_ds(file, class_to_index)
+    return normalize(ds)
+
 
 if __name__ == "__main__":
     train_ds, _ = get_simulated_ds(1)
