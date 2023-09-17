@@ -1,0 +1,22 @@
+classes:
+    - Standing
+    - Walking
+    - Running
+    - Badminton
+class_to_index:
+  standing: 0
+  walking: 1
+  running: 2
+  badminton: 3
+num_variables: 6
+
+encoding:
+  input_dim: 1
+  hidden_dim: 32
+  latent_dim: 16
+  batch_size: 40
+  lr: 0.01
+  gamma: 0.999
+  epochs: 150
+  m: 1.0
+  save_dir: models/basicmotions/encoding/
