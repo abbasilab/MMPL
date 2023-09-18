@@ -1,3 +1,4 @@
+num_classes: 4
 classes:
     - Standing
     - Walking
@@ -20,3 +21,15 @@ encoding:
   epochs: 150
   m: 1.0
   save_dir: models/basicmotions/encoding/
+
+single_variable_prototypes:
+  num_prototypes: 4
+  batch_size: 40
+  lr: 0.01
+  gamma: 0.999
+  epochs: 300
+  l1: 1.0
+  l2: 10.0
+  l3: 1.0
+  l4: 1.0
+  save_dir: models/basicmotions/single_variable_prototypes/

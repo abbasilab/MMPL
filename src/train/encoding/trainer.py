@@ -7,6 +7,9 @@ import umap
 from src.models.encoding import ContrastiveLoss
 
 class EncoderTrainer(torch.nn.Module):
+    """
+    Trains single-variable encoders.
+    """
     def __init__(self, encoders, train_ds, test_ds, classes, num_variables, batch_size, lr, gamma, epochs, m):
         super(EncoderTrainer, self).__init__()
         self.encoders = torch.nn.ModuleList(encoders)

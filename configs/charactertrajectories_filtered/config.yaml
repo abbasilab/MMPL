@@ -1,3 +1,4 @@
+num_classes: 4
 classes:
     - b
     - d
@@ -20,3 +21,16 @@ encoding:
   epochs: 1000
   m: 1.0
   save_dir: models/charactertrajectories_filtered/encoding/
+
+
+single_variable_prototypes:
+  num_prototypes: 4
+  batch_size: 275
+  lr: 0.01
+  gamma: 0.999
+  epochs: 750
+  l1: 1.0
+  l2: 1.0
+  l3: 0.1
+  l4: 0.1
+  save_dir: models//charactertrajectories_filtered/single_variable_prototypes/

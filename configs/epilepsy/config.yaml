@@ -1,3 +1,4 @@
+num_classes: 4
 classes:
     - Epilepsy
     - Walking
@@ -20,3 +21,15 @@ encoding:
   epochs: 1000
   m: 1.0
   save_dir: models/epilepsy/encoding/
+
+single_variable_prototypes:
+  num_prototypes: 4
+  batch_size: 137
+  lr: 0.01
+  gamma: 0.999
+  epochs: 750
+  l1: 1.0
+  l2: 10.0
+  l3: 1.0
+  l4: 0.1
+  save_dir: models/epilepsy/single_variable_prototypes/

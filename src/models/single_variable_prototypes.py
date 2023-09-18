@@ -1,0 +1,67 @@
+import torch
+
+class SingleVariablePrototypesModule(torch.nn.Module):
+    """
+    Module that holds encoder + prototype layer
+    """
+    def __init__(self, encoder, num_prototypes, latent_dim, use_fc=False):
+        super().__init__()
+        self.encoder = encoder
+        self.num_prototypes  = num_prototypes
+        self.latent_dim = latent_dim
+
+        self.prototypes = torch.nn.Parameter(torch.rand(num_prototypes, latent_dim))
+
+    def forward(self, x):
+        """
+        x: (batch_size, seq_len, 1)
+        Returns: (batch_size, num_prototypes)
+        For a given training point, computes embedding and then similarity vector to prototypes.
+        """
+        x = self.encoder(x)
+        
+        x = torch.unsqueeze(x, 1).repeat_interleave(self.num_prototypes, 1)
+        distances = x - self.prototypes
+        distances = torch.norm(distances, dim=2)
+        sim = torch.pow(1 + distances, -1)
+        return sim
+    
+class SingleVariablePrototypesWrapper(torch.nn.Module):
+    """
+    Wrapper class that holds <num_variables> SingleVariablePrototypesModule classes
+    """
+    def __init__(self, encoders, num_variables, num_classes, num_prototypes, latent_dim):
+        super().__init__()
+        self.encoders = encoders
+        self.num_variables = num_variables
+        self.num_classes = num_classes
+        self.num_prototypes = num_prototypes
+        self.latent_dim = latent_dim
+
+        single_variable_prototype_modules = []
+        for i in range(num_variables):
+            single_variable_prototype_modules.append(
+                SingleVariablePrototypesModule(
+                    encoder=encoders[i],
+                    num_prototypes=num_prototypes,
+                    latent_dim=latent_dim
+                )
+            )
+        self.single_variable_prototype_modules = torch.nn.ModuleList(single_variable_prototype_modules)
+
+        self.linear = torch.nn.Linear(num_variables * num_prototypes, num_classes)
+
+    def forward(self, x):
+        """
+        x: (batch_size, seq_len, num_variables)
+        Returns: (batch_size, num_variables * num_prototypes), (batch_size, num_classes)
+        Splits up data by variable and passes through single variable modules, then concatenates similarity vectors.
+        Also passes through an FC layer for classification purposes (Single Variable Module Training).
+        """
+        output = []
+        for i in range(self.num_variables):
+            inp = x[:, :, i].unsqueeze(2).float()
+            output.append(self.single_variable_prototype_modules[i](inp))
+        output = torch.cat(output, dim=1)
+        classification_output = self.linear(output)
+        return output, classification_output
