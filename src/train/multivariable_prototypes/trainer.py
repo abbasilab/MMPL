@@ -2,19 +2,20 @@ import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 import torch
 from tqdm import tqdm
 import umap
 
-from src.models.single_variable_prototypes import SingleVariablePrototypesWrapper
+from src.models.multivariable_prototypes import MultivariableModule
 
-class SingleVariablePrototypesTrainer(torch.nn.Module):
+class MultivariableModuleTrainer(torch.nn.Module):
     """
-    Trains single-variable prototypes modules
+    Trains multivariable module.
     """
-    def __init__(self, wrapper, train_ds, test_ds, classes, num_variables, num_prototypes, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
-        super(SingleVariablePrototypesTrainer, self).__init__()
-        self.wrapper = wrapper
+    def __init__(self, multivariable_module, train_ds, test_ds, classes, num_variables, num_prototypes, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
+        super(MultivariableModuleTrainer, self).__init__()
+        self.multivariable_module = multivariable_module
         self.train_ds = train_ds
         self.test_ds = test_ds
         self.classes = classes
@@ -32,10 +33,9 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
         self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
 
-        # Disable gradients for the encoders
-        for module in self.wrapper.single_variable_prototype_modules:
-            for param in module.encoder.parameters():
-                param.requires_grad = False
+        # Disable gradients for single variable portions
+        for param in self.multivariable_module.wrapper.parameters():
+            param.requires_grad = False
 
         self.opt = torch.optim.Adam(filter(lambda x: x.requires_grad, self.parameters()), lr=self.lr)
         self.classification_loss_fn = torch.nn.CrossEntropyLoss()
@@ -56,17 +56,16 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             # Iterate through the variables
             for data_matrix, _ in self.train_dataloader:
                 for i in range(self.num_variables):
-                    single_variable_data = data_matrix[:, :, i].unsqueeze(2).float()
-                    encoder = self.wrapper.single_variable_prototype_modules[i].encoder
-                    prototypes = self.wrapper.single_variable_prototype_modules[i].prototypes
-                    encodings = encoder(single_variable_data)
+                    wrapper = self.multivariable_module.wrapper
+                    prototypes = self.multivariable_module.prototypes
+                    sims, _ = wrapper(data_matrix)
                     # Step 1: Set a random element to be the first prototype
-                    prototypes[0] = random.choice(encodings)
+                    prototypes[0] = random.choice(sims)
                     for j in range(1, self.num_prototypes):
                         # Step 2: For each data point calculate distance to each chosen prototype
                         # Keep distance to closest chosen prototype
                         distances = []
-                        for point in encodings:
+                        for point in sims:
                             min_distance = float("inf")
                             for k in range(j):
                                 prototype = prototypes[k]
@@ -79,83 +78,66 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                         # Step 3: Choose an element at random to be the next prototype with prob proportional to distance
                         found = False
                         while not found:
-                            index = np.random.choice([ind for ind in range(len(encodings))], p=probabilities)
-                            candidate = encodings[index]
+                            index = np.random.choice([ind for ind in range(len(sims))], p=probabilities)
+                            candidate = sims[index]
                             if candidate not in prototypes:
                                 found = True
                         prototypes[j] = candidate
-
+    
     def prototype_diversity_penalty(self):
         """
         Penalizes prototypes for being close together.
         """
         total_penalty = 0
-        for i in range(self.num_variables):
-            prototypes = self.wrapper.single_variable_prototype_modules[i].prototypes
-            num_prototypes = prototypes.size(0)
-            penalty = 0.0
+        prototypes = self.multivariable_module.prototypes
+        num_prototypes = prototypes.size(0)
 
-            for j in range(num_prototypes):
-                for k in range(j + 1, num_prototypes):
-                    distance = torch.norm(prototypes[j] - prototypes[k])
-                    term = torch.pow(torch.max(torch.tensor(0.0), 1.0 - distance), 2)
-                    penalty += term
+        for j in range(num_prototypes):
+            for k in range(j + 1, num_prototypes):
+                distance = torch.norm(prototypes[j] - prototypes[k])
+                term = torch.pow(torch.max(torch.tensor(0.0), 1.0 - distance), 2)
+                total_penalty += term
 
-            total_penalty += penalty
         return total_penalty
     
-    def prototype_similarity_penalty(self, data):
+    def prototype_similarity_penalty(self, sims):
         """
         Penalizes prototypes for not being similar to a training point.
         """
-        total_penalty = 0
-        for i in range(self.num_variables):
-            single_variable_data = data[:, :, i].unsqueeze(2).float()
+        sims_exp = sims.unsqueeze(1)
+        prototypes_exp = self.multivariable_module.prototypes.unsqueeze(0)
 
-            embeddings = self.wrapper.single_variable_prototype_modules[i].encoder(single_variable_data)
-            embeddings_exp = embeddings.unsqueeze(1)
-            prototypes_exp = self.wrapper.single_variable_prototype_modules[i].prototypes.unsqueeze(0)
-
-            distances = torch.norm(embeddings_exp - prototypes_exp, dim=2)
-            min_distances = torch.min(distances, dim=0).values
-            sim = torch.sum(min_distances)
-            total_penalty += sim
-        return total_penalty
+        distances = torch.norm(sims_exp - prototypes_exp, dim=2)
+        min_distances = torch.min(distances, dim=0).values
+        return torch.sum(min_distances)
     
-    def encoded_space_coverage_penalty(self, data):
+    def encoded_space_coverage_penalty(self, sims):
         """
         Penalizes prototypes for leaving regions of the encoded space uncovered.
         """
-        total_penalty = 0
-        for i in range(self.num_variables):
-            single_variable_data = data[:, :, i].unsqueeze(2).float()
+        sims_exp = sims.unsqueeze(1)
+        prototypes_exp = self.multivariable_module.prototypes.unsqueeze(0) 
 
-            embeddings = self.wrapper.single_variable_prototype_modules[i].encoder(single_variable_data)
-            prototypes = self.wrapper.single_variable_prototype_modules[i].prototypes
-            embeddings_expanded = embeddings.unsqueeze(1)
-            prototypes_expanded = prototypes.unsqueeze(0) 
-
-            pairwise_distances = torch.norm(embeddings_expanded - prototypes_expanded, dim=2)
-            closest_distances = torch.min(pairwise_distances, dim=1)[0]
-            total_distance = torch.sum(closest_distances)
-            total_penalty += total_distance
+        pairwise_distances = torch.norm(sims_exp - prototypes_exp, dim=2)
+        closest_distances = torch.min(pairwise_distances, dim=1)[0]
+        total_penalty = torch.sum(closest_distances)
         return total_penalty
     
     def train(self):
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
-                _, classification_output = self.wrapper(data_matrix.float())
+                output, sv_sims = self.multivariable_module(data_matrix.float())
 
-                classification_loss = self.classification_loss_fn(classification_output, labels)
+                classification_loss = self.classification_loss_fn(output, labels)
                 self.classification_losses.append(float(classification_loss))
                 
                 diversity_penalty = self.prototype_diversity_penalty()
                 self.prototype_diversity_penalties.append(float(diversity_penalty))
 
-                similarity_penalty = self.prototype_similarity_penalty(data_matrix)
+                similarity_penalty = self.prototype_similarity_penalty(sv_sims)
                 self.prototype_similarity_penalties.append(float(similarity_penalty))
 
-                coverage_penalty = self.encoded_space_coverage_penalty(data_matrix)
+                coverage_penalty = self.encoded_space_coverage_penalty(sv_sims)
                 self.encoded_space_coverage_penalties.append(float(coverage_penalty))
 
                 total_loss = (self.l1)*classification_loss + \
@@ -163,7 +145,6 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                              (self.l3)*similarity_penalty + \
                              (self.l4)*coverage_penalty
                 self.total_losses.append(float(total_loss))
-
 
                 self.opt.zero_grad()
                 total_loss.backward()
@@ -215,47 +196,18 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         plt.legend()
         plt.show()
 
-    def plot_all_latent_spaces_with_prototypes(self, use_test=True):
-        ds = self.train_dataloader
-        if use_test:
-            ds = self.test_dataloader
-        for data_matrix, labels in ds:
-            for variable in range(self.num_variables):
-                plt.figure()
-                single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
-                with torch.no_grad():
-                    embeddings = self.wrapper.single_variable_prototype_modules[variable].encoder(single_variable_data)
-                    embeddings = torch.concat([embeddings, self.wrapper.single_variable_prototype_modules[variable].prototypes], dim=0)
-                    out = torch.concat([labels, len(self.classes)*torch.ones((self.wrapper.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
-                    reducer = umap.UMAP()
-                    embeddings_2d = reducer.fit_transform(embeddings)
+    def plot_prototypes_heatmap(self):
+        plt.figure()
+        sns.heatmap(self.multivariable_module.prototypes.detach().numpy())
+        plt.show()
 
-                    unique_labels = self.classes + ["Prototype"]
-                    string_labels = np.array([unique_labels[int(label)] for label in out])
-                    
-
-                    handles, lbls = [], []
-                    for label in self.classes:
-                        idx = np.where(string_labels == label)[0]
-                        scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label)
-                        handles.append(scatter)
-                        lbls.append(label)
-
-                    idx = np.where(string_labels == "Prototype")[0]
-                    scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], marker="*", edgecolor='black', label="Prototype")
-                    handles.append(scatter)
-                    lbls.append("Prototype")
-                    plt.legend(handles, lbls)
-                    plt.title("Latent Space for Variable " + str(variable + 1))
-                    plt.show()
-    
     def evaluate(self, use_test=True):
         with torch.no_grad():
             numerator = 0
             denominator = 0
             for data_matrix, label in self.test_dataloader:
-                _, classification_output = self.wrapper(data_matrix.float())
-                sof = torch.softmax(classification_output, 1)
+                output, _ = self.multivariable_module(data_matrix.float())
+                sof = torch.softmax(output, 1)
                 prediction = torch.argmax(sof, 1)
 
                 numerator += torch.sum(prediction.eq(label).int())
@@ -264,11 +216,13 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             print("Accuracy: " + str(accuracy))
 
     def save(self, save_dir):
-        save_name = save_dir + "single_variable_prototypes.pth"
-        torch.save(self.wrapper.state_dict(), save_name)
+        save_name = save_dir + "multivariable_module.pth"
+        torch.save(self.multivariable_module.state_dict(), save_name)
 
     def load(self, save_dir):
-        save_name = save_dir + "single_variable_prototypes.pth"
-        self.wrapper.load_state_dict(torch.load(save_name))
+        save_name = save_dir + "multivariable_module.pth"
+        self.multivariable_module.load_state_dict(torch.load(save_name))
 
-    
+
+
+

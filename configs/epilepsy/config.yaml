@@ -33,3 +33,14 @@ single_variable_prototypes:
   l3: 1.0
   l4: 0.1
   save_dir: models/epilepsy/single_variable_prototypes/
+
+multivariable_prototypes:
+  batch_size: 137
+  lr: 0.01
+  gamma: 0.999
+  epochs: 750
+  l1: 1.0
+  l2: 1.0
+  l3: 1.0
+  l4: 1.0
+  save_dir: models/epilepsy/multivariable_module/

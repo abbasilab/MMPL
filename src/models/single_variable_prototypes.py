@@ -60,8 +60,8 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
         """
         output = []
         for i in range(self.num_variables):
-            inp = x[:, :, i].unsqueeze(2).float()
-            output.append(self.single_variable_prototype_modules[i](inp))
+            single_variable_data = x[:, :, i].unsqueeze(2).float()
+            output.append(self.single_variable_prototype_modules[i](single_variable_data))
         output = torch.cat(output, dim=1)
         classification_output = self.linear(output)
         return output, classification_output
