@@ -42,7 +42,6 @@ def main(args):
     if args.save:
         trainer.save(encoding_config['save_dir'])
         trainer.load(encoding_config['save_dir'])
-        trainer.plot_contrastive_losses()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
