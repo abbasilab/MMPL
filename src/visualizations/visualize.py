@@ -4,15 +4,17 @@ import torch
 
 from src.data.data import get_ds
 from src.visualizations.datasets.basicmotions import basicmotions_visualize
+from src.visualizations.datasets.epilepsy import epilepsy_visualize
+from src.visualizations.datasets.charactertrajectories_filtered import charactertrajectories_filtered_visualize
 
 def main(args):
     
     if args.dataset == "basicmotions":
         basicmotions_visualize(args.dataset, args.type, args.save)
     elif args.dataset == "epilepsy":
-        return
+        epilepsy_visualize(args.dataset, args.type, args.save)
     elif args.dataset == "charactertrajectories_filtered":
-        return
+        charactertrajectories_filtered_visualize(args.dataset, args.type, args.save)
 
     
 
