@@ -13,8 +13,8 @@ num_variables: 3
 
 encoding:
   input_dim: 1
-  hidden_dim: 64
-  latent_dim: 32
+  hidden_dim: 32
+  latent_dim: 16
   batch_size: 137
   lr: 0.01
   gamma: 0.999
@@ -27,7 +27,7 @@ single_variable_prototypes:
   batch_size: 137
   lr: 0.01
   gamma: 0.999
-  epochs: 750
+  epochs: 300
   l1: 1.0
   l2: 10.0
   l3: 1.0
