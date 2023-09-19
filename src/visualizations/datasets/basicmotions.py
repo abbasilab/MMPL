@@ -6,7 +6,7 @@ import torch
 import umap
 
 from src.data.data import get_ds
-from src.utils.utils import get_config_from_dataset, get_test_path_from_dataset, load_encoders, load_single_variable_prototypes_wrapper, load_multivariable_module
+from src.utils.utils import get_config_from_dataset, get_test_path_from_dataset, load_encoders, load_single_variable_prototypes_wrapper, load_multivariable_prototypes
 
 def basicmotions_visualize(dataset, type, save):
     config = get_config_from_dataset(dataset)
@@ -55,11 +55,13 @@ def visualize_latent_space(config, test_ds, save):
         plt.tight_layout()
         fig.subplots_adjust(bottom=0.1)
 
-    plt.show()
-
     if save:
         save_name = "visualizations/basicmotions/embeddings.pdf"
         plt.savefig(save_name, dpi=300)
+    
+    plt.show()
+
+    
 
 
 def visualize_single_variable_prototypes(config, test_ds, save):
@@ -109,23 +111,22 @@ def visualize_single_variable_prototypes(config, test_ds, save):
         plt.tight_layout()
         fig.subplots_adjust(bottom=0.1)
 
-    plt.show()
 
     if save:
         save_name = "visualizations/basicmotions/single_variable_prototypes.pdf"
         plt.savefig(save_name, dpi=300)
 
+    plt.show()
 
 def visualize_multivariable_prototypes(config, save):
     plt.figure()
 
-    multivariable_module = load_multivariable_module(config)
-    sns.heatmap(multivariable_module.prototypes.detach().numpy())
-    plt.show()
+    multivariable_prototypes = load_multivariable_prototypes(config)
+    sns.heatmap(multivariable_prototypes.prototypes.detach().numpy())
 
     if save:
         save_name = "visualizations/basicmotions/multivariable_prototypes.pdf"
         plt.savefig(save_name, dpi=300)
-
+    plt.show()
 
                 

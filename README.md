@@ -14,7 +14,7 @@ As our model requires three seperate stages of training, we have provided script
 are available in the `models` folder. We include `state_dicts` for each of the 3 stages in the training process:
 - `enc.dat` is the pretrained model after single-variable encoding
 - `sv_modules_wrapper.dat` is the model after the single-variable prototype stage
-- `multivariable_module.dat` is the model after learning the multivariable prototypes
+- `multivariable_prototypes.dat` is the model after learning the multivariable prototypes
 
 If you want to train the model yourself on these datasets, you can run:
 ```train

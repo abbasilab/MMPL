@@ -13,9 +13,9 @@ class MultivariableModuleTrainer(torch.nn.Module):
     """
     Trains multivariable module.
     """
-    def __init__(self, multivariable_module, train_ds, test_ds, classes, num_variables, num_prototypes, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
+    def __init__(self, multivariable_prototypes, train_ds, test_ds, classes, num_variables, num_prototypes, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
         super(MultivariableModuleTrainer, self).__init__()
-        self.multivariable_module = multivariable_module
+        self.multivariable_prototypes = multivariable_prototypes
         self.train_ds = train_ds
         self.test_ds = test_ds
         self.classes = classes
@@ -34,7 +34,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
 
         # Disable gradients for single variable portions
-        for param in self.multivariable_module.wrapper.parameters():
+        for param in self.multivariable_prototypes.wrapper.parameters():
             param.requires_grad = False
 
         self.opt = torch.optim.Adam(filter(lambda x: x.requires_grad, self.parameters()), lr=self.lr)
@@ -56,8 +56,8 @@ class MultivariableModuleTrainer(torch.nn.Module):
             # Iterate through the variables
             for data_matrix, _ in self.train_dataloader:
                 for i in range(self.num_variables):
-                    wrapper = self.multivariable_module.wrapper
-                    prototypes = self.multivariable_module.prototypes
+                    wrapper = self.multivariable_prototypes.wrapper
+                    prototypes = self.multivariable_prototypes.prototypes
                     sims, _ = wrapper(data_matrix)
                     # Step 1: Set a random element to be the first prototype
                     prototypes[0] = random.choice(sims)
@@ -89,7 +89,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         Penalizes prototypes for being close together.
         """
         total_penalty = 0
-        prototypes = self.multivariable_module.prototypes
+        prototypes = self.multivariable_prototypes.prototypes
         num_prototypes = prototypes.size(0)
 
         for j in range(num_prototypes):
@@ -105,7 +105,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         Penalizes prototypes for not being similar to a training point.
         """
         sims_exp = sims.unsqueeze(1)
-        prototypes_exp = self.multivariable_module.prototypes.unsqueeze(0)
+        prototypes_exp = self.multivariable_prototypes.prototypes.unsqueeze(0)
 
         distances = torch.norm(sims_exp - prototypes_exp, dim=2)
         min_distances = torch.min(distances, dim=0).values
@@ -116,7 +116,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         Penalizes prototypes for leaving regions of the encoded space uncovered.
         """
         sims_exp = sims.unsqueeze(1)
-        prototypes_exp = self.multivariable_module.prototypes.unsqueeze(0) 
+        prototypes_exp = self.multivariable_prototypes.prototypes.unsqueeze(0) 
 
         pairwise_distances = torch.norm(sims_exp - prototypes_exp, dim=2)
         closest_distances = torch.min(pairwise_distances, dim=1)[0]
@@ -126,7 +126,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
     def train(self):
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
-                output, sv_sims = self.multivariable_module(data_matrix.float())
+                output, sv_sims = self.multivariable_prototypes(data_matrix.float())
 
                 classification_loss = self.classification_loss_fn(output, labels)
                 self.classification_losses.append(float(classification_loss))
@@ -198,7 +198,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
 
     def plot_prototypes_heatmap(self):
         plt.figure()
-        sns.heatmap(self.multivariable_module.prototypes.detach().numpy())
+        sns.heatmap(self.multivariable_prototypes.prototypes.detach().numpy())
         plt.show()
 
     def evaluate(self, use_test=True):
@@ -206,7 +206,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
             numerator = 0
             denominator = 0
             for data_matrix, label in self.test_dataloader:
-                output, _ = self.multivariable_module(data_matrix.float())
+                output, _ = self.multivariable_prototypes(data_matrix.float())
                 sof = torch.softmax(output, 1)
                 prediction = torch.argmax(sof, 1)
 
@@ -216,12 +216,12 @@ class MultivariableModuleTrainer(torch.nn.Module):
             print("Accuracy: " + str(accuracy))
 
     def save(self, save_dir):
-        save_name = save_dir + "multivariable_module.pth"
-        torch.save(self.multivariable_module.state_dict(), save_name)
+        save_name = save_dir + "multivariable_prototypes.pth"
+        torch.save(self.multivariable_prototypes.state_dict(), save_name)
 
     def load(self, save_dir):
-        save_name = save_dir + "multivariable_module.pth"
-        self.multivariable_module.load_state_dict(torch.load(save_name))
+        save_name = save_dir + "multivariable_prototypes.pth"
+        self.multivariable_prototypes.load_state_dict(torch.load(save_name))
 
 
 

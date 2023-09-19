@@ -46,16 +46,16 @@ def load_single_variable_prototypes_wrapper(config):
     wrapper.load_state_dict(torch.load(save_name))
     return wrapper
 
-def load_multivariable_module(config):
+def load_multivariable_prototypes(config):
     single_variable_prototypes_config = config['single_variable_prototypes']
     multivariable_config = config['multivariable_prototypes']
     wrapper = load_single_variable_prototypes_wrapper(config)
-    multivariable_module = MultivariableModule(
+    multivariable_prototypes = MultivariableModule(
         wrapper=wrapper,
         num_classes=config['num_classes'],
         num_variables=config['num_variables'],
         num_sv_prototypes=single_variable_prototypes_config['num_prototypes']
     )
-    save_name = multivariable_config['save_dir'] + "multivariable_module.pth"
-    multivariable_module.load_state_dict(torch.load(save_name))
-    return multivariable_module
+    save_name = multivariable_config['save_dir'] + "multivariable_prototypes.pth"
+    multivariable_prototypes.load_state_dict(torch.load(save_name))
+    return multivariable_prototypes

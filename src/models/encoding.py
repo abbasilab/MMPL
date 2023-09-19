@@ -31,7 +31,6 @@ class Encoder(torch.nn.Module):
     def __init__(self, input_dim, hidden_dim, latent_dim):
         super(Encoder, self).__init__()
         self.lstm1 = torch.nn.LSTM(input_dim, hidden_dim, batch_first=True, bidirectional=True)
-        self.dropout = torch.nn.Dropout(0.2)
         self.lstm2 = torch.nn.LSTM(2 * hidden_dim, latent_dim, batch_first=True)
         
     def forward(self, x):
@@ -40,7 +39,6 @@ class Encoder(torch.nn.Module):
         Returns: (batch_size, latent_dim)
         """
         x, (hidden, cell) = self.lstm1(x)
-        x = self.dropout(x)
         x, (hidden, cell) = self.lstm2(x)
         return hidden[-1, :, :]
     

@@ -43,4 +43,4 @@ multivariable_prototypes:
   l2: 1.0
   l3: 1.0
   l4: 1.0
-  save_dir: models/epilepsy/multivariable_module/
+  save_dir: models/epilepsy/multivariable_prototypes/
