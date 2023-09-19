@@ -1,13 +1,12 @@
 import argparse
 
 import torch
-import yaml
 
 from src.data.data import get_ds
 from src.models.encoding import Encoder
 from src.models.single_variable_prototypes import SingleVariablePrototypesWrapper
 from src.train.single_variable_prototypes.trainer import SingleVariablePrototypesTrainer
-from src.train.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
+from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
 
 def main(args):
     config = get_config_from_dataset(args.dataset)

@@ -1,12 +1,9 @@
 import argparse
 
-import torch
-import yaml
-
 from src.data.data import get_ds
 from src.models.encoding import Encoder
 from src.train.encoding.trainer import EncoderTrainer
-from src.train.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
+from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
 
 def main(args):
     config = get_config_from_dataset(args.dataset)
