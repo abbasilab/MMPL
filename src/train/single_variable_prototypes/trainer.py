@@ -6,8 +6,6 @@ import torch
 from tqdm import tqdm
 import umap
 
-from src.models.single_variable_prototypes import SingleVariablePrototypesWrapper
-
 class SingleVariablePrototypesTrainer(torch.nn.Module):
     """
     Trains single-variable prototypes modules
