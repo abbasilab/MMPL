@@ -6,9 +6,9 @@ import torch
 import umap
 
 from src.data.data import get_ds
-from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset, load_encoders, load_single_variable_prototypes_wrapper, load_multivariable_prototypes
+from src.utils.utils import *
 
-def basicmotions_visualize(dataset, type, save):
+def simulated_640_visualize(dataset, type, save):
     config = get_config_from_dataset(dataset)
     train_ds = get_ds(get_train_path_from_dataset(dataset), config['class_to_index'])
     test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'])
@@ -19,7 +19,7 @@ def basicmotions_visualize(dataset, type, save):
     elif type == "multi-var":
         visualize_multivariable_prototypes(config, save)
     elif type == "project":
-        visualize_projected_prototypes(config, train_ds, save)
+        visualize_projected_prototypes(config, test_ds, save)
     
 
 def visualize_latent_space(config, test_ds, save):
@@ -27,17 +27,24 @@ def visualize_latent_space(config, test_ds, save):
     for encoder in encoders:
         encoder.eval()
     test_loader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
+    class_to_pattern_map = get_class_to_pattern_map()
     with torch.no_grad():
-        classes = [0, 1, 2, 3]
+        classes = [i for i in range(64)]
         colors = ['red', 'blue', 'green', 'orange']
-        variable_names = ["Acc (x)", "Acc (y)", "Acc (z)", "Gyro (x)", "Gyro (y)", "Gyro (z)"]
+        variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
+        pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4"]
 
-        fig, axs = plt.subplots(2, 3, figsize=(9, 6), sharex=True, sharey=True)
+        fig, axs = plt.subplots(2, 2, figsize=(7, 7), sharex=True, sharey=True)
 
         for i in range(2):
-            for j in range(3):
+            for j in range(2):
+                variable = i*2 + j
+
                 ax = axs[i, j]
-                variable = i*3 + j
+                ax.set_title(variable_names[variable])
+                ax.set_xticks([])
+                ax.set_yticks([])
+
                 encoder = encoders[variable]
                 for data_matrix, labels, in test_loader:
                     single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
@@ -45,26 +52,26 @@ def visualize_latent_space(config, test_ds, save):
                     reducer = umap.UMAP()
                     embeddings_2d = reducer.fit_transform(embeddings)
 
-                    for k, label in enumerate(classes):
-                        idx = np.where(labels == label)[0]
-                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label, c=colors[k])
+                    if variable == 3:
+                        ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')
+                    else:
+                        for k, label in enumerate(classes):
+                            idx = np.where(labels == label)[0]
+                            pattern = class_to_pattern_map[label][variable]
+                            ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
 
-                        ax.set_title(variable_names[variable])
-                        ax.set_xticks([])
-                        ax.set_yticks([])
-        handles = [plt.Line2D([0], [0], marker='o', color='w', label=config['classes'][c],
-                       markersize=10, markerfacecolor=colors[c]) for c in classes]
-        fig.legend(handles=handles, ncol=4, loc='lower center')
+        handles = [plt.Line2D([0], [0], marker='o', color='w', label=pattern_labels[c],
+                       markersize=10, markerfacecolor=colors[c]) for c in range(4)]
+        fig.legend(handles=handles, ncol=5, loc='lower center')
         plt.tight_layout()
         fig.subplots_adjust(bottom=0.1)
 
-    if save:
-        save_name = "visualizations/basicmotions/embeddings.pdf"
-        plt.savefig(save_name, dpi=300)
-    
-    plt.show()
 
-    
+    if save:
+        save_name = "visualizations/basicmotions/single_variable_prototypes.pdf"
+        plt.savefig(save_name, dpi=300)
+
+    plt.show()
 
 
 def visualize_single_variable_prototypes(config, test_ds, save):
@@ -74,17 +81,18 @@ def visualize_single_variable_prototypes(config, test_ds, save):
         encoder.eval()
     wrapper.eval()
     test_loader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
+    class_to_pattern_map = get_class_to_pattern_map()
     with torch.no_grad():
-        classes = [0, 1, 2, 3]
-        classes_with_prototype = classes + [4]
-        colors = ['red', 'blue', 'green', 'orange', 'magenta']
-        variable_names = ["Acc (x)", "Acc (y)", "Acc (z)", "Gyro (x)", "Gyro (y)", "Gyro (z)"]
+        classes = [i for i in range(64)]
+        colors = ['red', 'blue', 'green', 'orange', 'black']
+        variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
+        pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
 
-        fig, axs = plt.subplots(2, 3, figsize=(9, 6), sharex=True, sharey=True)
+        fig, axs = plt.subplots(2, 2, figsize=(7, 7), sharex=True, sharey=True)
 
         for i in range(2):
-            for j in range(3):
-                variable = i*3 + j
+            for j in range(2):
+                variable = i*2 + j
 
                 ax = axs[i, j]
                 ax.set_title(variable_names[variable])
@@ -100,16 +108,19 @@ def visualize_single_variable_prototypes(config, test_ds, save):
                     reducer = umap.UMAP()
                     embeddings_2d = reducer.fit_transform(embeddings)
 
-                    for k, label in enumerate(classes):
-                        idx = np.where(labels == label)[0]
-                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label, c=colors[k])
+                    if variable == 3:
+                        ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')
+                    else:
+                        for k, label in enumerate(classes):
+                            idx = np.where(labels == label)[0]
+                            pattern = class_to_pattern_map[label][variable]
+                            ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
 
-                    idx = np.where(labels == len(classes))[0]
-                    ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=len(classes), marker="*", edgecolor='black', s=50, c=colors[-1])
+                        idx = np.where(labels == len(classes))[0]
+                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', s=50, c='black')
 
-        legend_names = config['classes'] + ["Prototype"]
-        handles = [plt.Line2D([0], [0], marker='o', color='w', label=legend_names[c],
-                       markersize=10, markerfacecolor=colors[c]) for c in classes_with_prototype]
+        handles = [plt.Line2D([0], [0], marker='o', color='w', label=pattern_labels[c],
+                       markersize=10, markerfacecolor=colors[c]) for c in range(5)]
         fig.legend(handles=handles, ncol=5, loc='lower center')
         plt.tight_layout()
         fig.subplots_adjust(bottom=0.1)
@@ -121,6 +132,7 @@ def visualize_single_variable_prototypes(config, test_ds, save):
 
     plt.show()
 
+
 def visualize_multivariable_prototypes(config, save):
     plt.figure()
 
@@ -128,7 +140,7 @@ def visualize_multivariable_prototypes(config, save):
     sns.heatmap(multivariable_prototypes.prototypes.detach().numpy())
 
     if save:
-        save_name = "visualizations/basicmotions/multivariable_prototypes.pdf"
+        save_name = "visualizations/simulated_640/multivariable_prototypes.pdf"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -137,15 +149,15 @@ def visualize_projected_prototypes(config, train_ds, save):
     multivariable_module.eval()
     train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False)
     fig, axs = plt.subplots(4, 3, figsize=(6.75, 9))
-    colors = ['red', 'blue', 'orange', 'green']
-    classes = ['Standing', 'Walking', 'Badminton', "Running"]
+    colors = ['red', 'green', 'blue', 'orange']
+    classes = ['Epilepsy', 'Running', 'Walking', "Sawing"]
     with torch.no_grad():
         prototype_matrix = multivariable_module.prototypes
         wrapper = multivariable_module.wrapper
         for i in range(multivariable_module.num_classes):
             prototype = prototype_matrix[i]
             chunks = prototype.split(wrapper.num_prototypes)
-            for j in range(3):
+            for j in range(len(chunks)):
                 index = torch.argmax(chunks[j])
                 sv_prototype = wrapper.single_variable_prototype_modules[j].prototypes[index]
 

@@ -6,6 +6,7 @@ from src.data.data import get_ds
 from src.visualizations.datasets.basicmotions import basicmotions_visualize
 from src.visualizations.datasets.epilepsy import epilepsy_visualize
 from src.visualizations.datasets.charactertrajectories_filtered import charactertrajectories_filtered_visualize
+from src.visualizations.datasets.simulated_640 import simulated_640_visualize
 
 def main(args):
     
@@ -15,6 +16,8 @@ def main(args):
         epilepsy_visualize(args.dataset, args.type, args.save)
     elif args.dataset == "charactertrajectories_filtered":
         charactertrajectories_filtered_visualize(args.dataset, args.type, args.save)
+    elif args.dataset == "simulated_640":
+        simulated_640_visualize(args.dataset, args.type, args.save)
 
     
 

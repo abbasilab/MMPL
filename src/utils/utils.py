@@ -59,3 +59,11 @@ def load_multivariable_prototypes(config):
     save_name = multivariable_config['save_dir'] + "multivariable_prototypes.pth"
     multivariable_prototypes.load_state_dict(torch.load(save_name))
     return multivariable_prototypes
+
+def get_class_to_pattern_map():
+    class_to_pattern_map = []
+    for i in range(4):
+        for j in range(4):
+            for k in range(4):
+                class_to_pattern_map.append([i, j, k])
+    return class_to_pattern_map

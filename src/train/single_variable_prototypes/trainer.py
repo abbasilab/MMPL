@@ -228,10 +228,8 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                     reducer = umap.UMAP()
                     embeddings_2d = reducer.fit_transform(embeddings)
 
-                    unique_labels = self.classes + ["Prototype"]
+                    unique_labels = self.classes + [len(self.classes)]
                     string_labels = np.array([unique_labels[int(label)] for label in out])
-                    
-
                     handles, lbls = [], []
                     for label in self.classes:
                         idx = np.where(string_labels == label)[0]
@@ -239,7 +237,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                         handles.append(scatter)
                         lbls.append(label)
 
-                    idx = np.where(string_labels == "Prototype")[0]
+                    idx = np.where(string_labels == len(self.classes))[0]
                     scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], marker="*", edgecolor='black', label="Prototype")
                     handles.append(scatter)
                     lbls.append("Prototype")
