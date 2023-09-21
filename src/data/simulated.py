@@ -151,157 +151,48 @@ class ProjectDatasetReal:
         minimum = torch.argmin(distances,dim=0)
         return data[minimum],label[minimum]
     
+def generate(save_name, num_points_per_class):
+    data = DataMiningSimulatedDataset()
+    ds, class_descriptor = data.generate_dataset(num_points_per_class)
+    data_load = torch.utils.data.DataLoader(ds, len(ds), False)
+    with open(save_name, 'w') as f:
+        f.write("@problemName simulated\n")
+        f.write("@timeStamps false\n")
+        f.write("@missing false\n")
+        f.write("@univariate false\n")
+        f.write("@dimensions 4\n")
+        f.write("@equalLength true\n")
+        f.write("@seriesLength 100\n")
+        f.write("@classLabel true")
+        for i in range(64):
+            f.write(" " + str(i))
+        f.write("\n")
+        f.write("@data\n")
+        for data_matrix, labels in data_load:
+            batch_size, seq_len, num_variables = data_matrix.size()
+            # Iterate over all time series
+            for i in range(batch_size):
+                # Then over all variables
+                for j in range(num_variables):
+                    # Then over each point in the time series
+                    for k in range(seq_len):
+                        point = data_matrix[i][k][j]
+                        f.write(str(point.item()))
+                        if k == seq_len - 1:
+                            f.write(":")
+                        else:
+                            f.write(",")
+                f.write(str(labels[i].item()))
+                f.write("\n")
+    
 if __name__ == "__main__":
 
     # Generate dataset with 10 points per class, write to .ts file
-    data = DataMiningSimulatedDataset()
-    ds, class_descriptor = data.generate_dataset(10)
-    save_name = "data/simulated_640/processed/train.ts"
-    class_to_index = {}
-    for i in range(64):
-        class_to_index[str(i)] = i
-    data_load = torch.utils.data.DataLoader(ds, len(ds), False)
+    generate("data/simulated_640/processed/train.ts", 10)
+    generate("data/simulated_640/processed/val.ts", 10)
+    generate("data/simulated_640/processed/test.ts", 10)
 
-    with open(save_name, 'w') as f:
-        f.write("@problemName simulated\n")
-        f.write("@timeStamps false\n")
-        f.write("@missing false\n")
-        f.write("@univariate false\n")
-        f.write("@dimensions 4\n")
-        f.write("@equalLength true\n")
-        f.write("@seriesLength 100\n")
-        f.write("@classLabel true")
-        for i in range(64):
-            f.write(" " + str(i))
-        f.write("\n")
-        f.write("@data\n")
-        for data_matrix, labels in data_load:
-            batch_size, seq_len, num_variables = data_matrix.size()
-            # Iterate over all time series
-            for i in range(batch_size):
-                # Then over all variables
-                for j in range(num_variables):
-                    # Then over each point in the time series
-                    for k in range(seq_len):
-                        point = data_matrix[i][k][j]
-                        f.write(str(point.item()))
-                        if k == seq_len - 1:
-                            f.write(":")
-                        else:
-                            f.write(",")
-                f.write(str(labels[i].item()))
-                f.write("\n")
-
-    data = DataMiningSimulatedDataset()
-    ds, class_descriptor = data.generate_dataset(10)
-    save_name = "data/simulated_640/processed/test.ts"
-    class_to_index = {}
-    for i in range(64):
-        class_to_index[str(i)] = i
-    data_load = torch.utils.data.DataLoader(ds, len(ds), False)
-
-    with open(save_name, 'w') as f:
-        f.write("@problemName simulated\n")
-        f.write("@timeStamps false\n")
-        f.write("@missing false\n")
-        f.write("@univariate false\n")
-        f.write("@dimensions 4\n")
-        f.write("@equalLength true\n")
-        f.write("@seriesLength 100\n")
-        f.write("@classLabel true")
-        for i in range(64):
-            f.write(" " + str(i))
-        f.write("\n")
-        f.write("@data\n")
-        for data_matrix, labels in data_load:
-            batch_size, seq_len, num_variables = data_matrix.size()
-            # Iterate over all time series
-            for i in range(batch_size):
-                # Then over all variables
-                for j in range(num_variables):
-                    # Then over each point in the time series
-                    for k in range(seq_len):
-                        point = data_matrix[i][k][j]
-                        f.write(str(point.item()))
-                        if k == seq_len - 1:
-                            f.write(":")
-                        else:
-                            f.write(",")
-                f.write(str(labels[i].item()))
-                f.write("\n")
-
-    data = DataMiningSimulatedDataset()
-    ds, class_descriptor = data.generate_dataset(100)
-    save_name = "data/simulated_6400/processed/train.ts"
-    class_to_index = {}
-    for i in range(64):
-        class_to_index[str(i)] = i
-    data_load = torch.utils.data.DataLoader(ds, len(ds), False)
-
-    with open(save_name, 'w') as f:
-        f.write("@problemName simulated\n")
-        f.write("@timeStamps false\n")
-        f.write("@missing false\n")
-        f.write("@univariate false\n")
-        f.write("@dimensions 4\n")
-        f.write("@equalLength true\n")
-        f.write("@seriesLength 100\n")
-        f.write("@classLabel true")
-        for i in range(64):
-            f.write(" " + str(i))
-        f.write("\n")
-        f.write("@data\n")
-        for data_matrix, labels in data_load:
-            batch_size, seq_len, num_variables = data_matrix.size()
-            # Iterate over all time series
-            for i in range(batch_size):
-                # Then over all variables
-                for j in range(num_variables):
-                    # Then over each point in the time series
-                    for k in range(seq_len):
-                        point = data_matrix[i][k][j]
-                        f.write(str(point.item()))
-                        if k == seq_len - 1:
-                            f.write(":")
-                        else:
-                            f.write(",")
-                f.write(str(labels[i].item()))
-                f.write("\n")
-
-    data = DataMiningSimulatedDataset()
-    ds, class_descriptor = data.generate_dataset(100)
-    save_name = "data/simulated_6400/processed/test.ts"
-    class_to_index = {}
-    for i in range(64):
-        class_to_index[str(i)] = i
-    data_load = torch.utils.data.DataLoader(ds, len(ds), False)
-
-    with open(save_name, 'w') as f:
-        f.write("@problemName simulated\n")
-        f.write("@timeStamps false\n")
-        f.write("@missing false\n")
-        f.write("@univariate false\n")
-        f.write("@dimensions 4\n")
-        f.write("@equalLength true\n")
-        f.write("@seriesLength 100\n")
-        f.write("@classLabel true")
-        for i in range(64):
-            f.write(" " + str(i))
-        f.write("\n")
-        f.write("@data\n")
-        for data_matrix, labels in data_load:
-            batch_size, seq_len, num_variables = data_matrix.size()
-            # Iterate over all time series
-            for i in range(batch_size):
-                # Then over all variables
-                for j in range(num_variables):
-                    # Then over each point in the time series
-                    for k in range(seq_len):
-                        point = data_matrix[i][k][j]
-                        f.write(str(point.item()))
-                        if k == seq_len - 1:
-                            f.write(":")
-                        else:
-                            f.write(",")
-                f.write(str(labels[i].item()))
-                f.write("\n")
+    generate("data/simulated_6400/processed/train.ts", 100)
+    generate("data/simulated_6400/processed/val.ts", 100)
+    generate("data/simulated_6400/processed/test.ts", 100)
+    

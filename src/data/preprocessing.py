@@ -1,3 +1,5 @@
+import random
+
 import h5py
 from sktime.datasets import load_from_tsfile_to_dataframe
 import torch
@@ -38,6 +40,45 @@ def main():
                         outfile.write(stripped_line[:-len(old)] + new + "\n")
                         break
 
+    # Create validation sets, 80/20 split on train data
+    with open("data/charactertrajectories_filtered/processed/train.ts", 'r') as f:
+        lines = f.readlines()
+
+    metadata = lines[:7]
+    data = lines[7:]
+
+    random.shuffle(data)
+    split_index = int(0.8 * len(data))
+    train_data = data[:split_index]
+    val_data = data[split_index:]
+
+    with open("data/charactertrajectories_filtered/processed/train.ts", 'w') as f:
+        f.writelines(metadata)
+        f.writelines(train_data)
+    with open("data/charactertrajectories_filtered/processed/val.ts", 'w') as f:
+        f.writelines(metadata)
+        f.writelines(val_data)
+
+
+
+    with open("data/epilepsy/processed/train.ts", 'r') as f:
+        lines = f.readlines()
+
+    metadata = lines[:42]
+    data = lines[42:]
+
+    random.shuffle(data)
+    split_index = int(0.8 * len(data))
+    train_data = data[:split_index]
+    val_data = data[split_index:]
+
+    with open("data/epilepsy/processed/train.ts", 'w') as f:
+        f.writelines(metadata)
+        f.writelines(train_data)
+    with open("data/epilepsy/processed/val.ts", 'w') as f:
+        f.writelines(metadata)
+        f.writelines(val_data)
+    
 
 
 
