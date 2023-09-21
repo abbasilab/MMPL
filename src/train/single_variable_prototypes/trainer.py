@@ -97,7 +97,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             for j in range(num_prototypes):
                 for k in range(j + 1, num_prototypes):
                     distance = torch.norm(prototypes[j] - prototypes[k])
-                    term = torch.pow(torch.max(torch.tensor(0.0), 2.0 - distance), 2)
+                    term = torch.pow(torch.max(torch.tensor(0.0), 1.0 - distance), 2)
                     penalty += term
 
             total_penalty += penalty
@@ -119,7 +119,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             min_distances = torch.min(distances, dim=0).values
             sim = torch.sum(min_distances)
             total_penalty += sim
-        return total_penalty
+        return total_penalty / self.num_prototypes
     
     def encoded_space_coverage_penalty(self, data):
         """
@@ -138,7 +138,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             closest_distances = torch.min(pairwise_distances, dim=1)[0]
             total_distance = torch.sum(closest_distances)
             total_penalty += total_distance
-        return total_penalty
+        return total_penalty / len(data)
     
     def train(self):
         for epoch in tqdm(range(self.epochs)):
@@ -234,12 +234,12 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                     handles, lbls = [], []
                     for label in self.classes:
                         idx = np.where(string_labels == label)[0]
-                        scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label)
+                        scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label, alpha=0.5)
                         handles.append(scatter)
                         lbls.append(label)
 
-                    idx = np.where(string_labels == len(self.classes))[0]
-                    scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], marker="*", edgecolor='black', label="Prototype")
+                    idx = np.where(string_labels == str(len(self.classes)))[0]
+                    scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], marker="*", edgecolor='black', label="Prototype", s=75, c="magenta")
                     handles.append(scatter)
                     lbls.append("Prototype")
                     plt.legend(handles, lbls)

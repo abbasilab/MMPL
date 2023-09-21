@@ -30,7 +30,8 @@ def main(args):
         num_variables=config['num_variables'],
         num_classes=config['num_classes'],
         num_prototypes=single_variable_prototypes_config['num_prototypes'],
-        latent_dim=encoding_config['latent_dim']
+        latent_dim=encoding_config['latent_dim'],
+        num_layers=single_variable_prototypes_config['num_layers']
     )
     wrapper.load_state_dict(torch.load(single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth"))
 
@@ -38,7 +39,8 @@ def main(args):
         wrapper=wrapper,
         num_classes=config['num_classes'],
         num_variables=config['num_variables'],
-        num_sv_prototypes=single_variable_prototypes_config['num_prototypes']
+        num_sv_prototypes=single_variable_prototypes_config['num_prototypes'],
+        num_layers=multivariable_config['num_layers']
     )
 
     trainer = MultivariableModuleTrainer(
@@ -48,6 +50,7 @@ def main(args):
         classes=config['classes'],
         num_variables=config['num_variables'],
         num_prototypes=config['num_classes'],
+        num_layers=multivariable_config['num_layers'],
         batch_size=multivariable_config['batch_size'],
         lr=multivariable_config['lr'],
         gamma=multivariable_config['gamma'],
@@ -61,8 +64,7 @@ def main(args):
     trainer.initialize_prototypes()
     trainer.train()
 
-    if args.eval:
-        trainer.evaluate()
+    trainer.evaluate()
 
     if args.view:
         trainer.plot_classification_loss()
@@ -79,7 +81,6 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
-    parser.add_argument("--eval", action=argparse.BooleanOptionalAction, default=False, help="Whether to show final test accuracy or not")
     parser.add_argument("--view", action=argparse.BooleanOptionalAction, default=False, help="Whether to view loss curves/latent spaces")
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the model or not")
 

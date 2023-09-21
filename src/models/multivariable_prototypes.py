@@ -4,17 +4,26 @@ class MultivariableModule(torch.nn.Module):
     """
     Module that holds the multivariable prototypes
     """
-    def __init__(self, wrapper, num_classes, num_variables, num_sv_prototypes):
+    def __init__(self, wrapper, num_classes, num_variables, num_sv_prototypes, num_layers):
         super(MultivariableModule, self).__init__()
         self.wrapper = wrapper
         self.num_classes = num_classes
         self.num_variables = num_variables
         self.num_sv_prototypes = num_sv_prototypes
+        self.num_layers = num_layers
 
         # One prototype per class
         self.prototypes = torch.nn.Parameter(torch.rand(num_classes, num_sv_prototypes*num_variables))
 
-        self.linear = torch.nn.Linear(num_classes, num_classes)
+        if num_layers == 1:
+            self.linear = torch.nn.Linear(num_classes, num_classes)
+        else:
+            layers = [torch.nn.Linear(num_classes, num_classes), torch.nn.ReLU()]
+            for i in range(num_layers - 1):
+                layers.append(torch.nn.Linear(num_classes, num_classes))
+                if i != num_layers - 2:
+                    layers.append(torch.nn.ReLU())
+            self.linear = torch.nn.Sequential(*layers)
 
     def forward(self, x):
         """

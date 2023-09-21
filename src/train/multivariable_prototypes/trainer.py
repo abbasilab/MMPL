@@ -13,7 +13,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
     """
     Trains multivariable module.
     """
-    def __init__(self, multivariable_prototypes, train_ds, test_ds, classes, num_variables, num_prototypes, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
+    def __init__(self, multivariable_prototypes, train_ds, test_ds, classes, num_variables, num_prototypes, num_layers, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
         super(MultivariableModuleTrainer, self).__init__()
         self.multivariable_prototypes = multivariable_prototypes
         self.train_ds = train_ds
@@ -21,6 +21,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         self.classes = classes
         self.num_variables = num_variables
         self.num_prototypes = num_prototypes
+        self.num_layers = num_layers
         self.batch_size = batch_size
         self.lr = lr
         self.gamma = gamma
