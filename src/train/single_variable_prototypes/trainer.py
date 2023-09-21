@@ -214,7 +214,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         plt.legend()
         plt.show()
 
-    def plot_all_latent_spaces_with_prototypes(self, use_test=True):
+    def plot_all_latent_spaces_with_prototypes(self, use_test=False):
         ds = self.train_dataloader
         if use_test:
             ds = self.test_dataloader
@@ -246,11 +246,14 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                     plt.title("Latent Space for Variable " + str(variable + 1))
                     plt.show()
     
-    def evaluate(self, use_test=True):
+    def evaluate(self, use_test=False):
+        dl = self.train_dataloader
+        if use_test:
+            dl = self.test_dataloader
         with torch.no_grad():
             numerator = 0
             denominator = 0
-            for data_matrix, label in self.test_dataloader:
+            for data_matrix, label in dl:
                 _, classification_output = self.wrapper(data_matrix.float())
                 sof = torch.softmax(classification_output, 1)
                 prediction = torch.argmax(sof, 1)

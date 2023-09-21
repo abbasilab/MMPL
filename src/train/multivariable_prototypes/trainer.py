@@ -110,7 +110,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
 
         distances = torch.norm(sims_exp - prototypes_exp, dim=2)
         min_distances = torch.min(distances, dim=0).values
-        return torch.sum(min_distances)
+        return torch.sum(min_distances) / self.num_prototypes
     
     def encoded_space_coverage_penalty(self, sims):
         """
@@ -122,7 +122,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         pairwise_distances = torch.norm(sims_exp - prototypes_exp, dim=2)
         closest_distances = torch.min(pairwise_distances, dim=1)[0]
         total_penalty = torch.sum(closest_distances)
-        return total_penalty
+        return total_penalty / len(sims)
     
     def train(self):
         for epoch in tqdm(range(self.epochs)):
@@ -202,11 +202,14 @@ class MultivariableModuleTrainer(torch.nn.Module):
         sns.heatmap(self.multivariable_prototypes.prototypes.detach().numpy())
         plt.show()
 
-    def evaluate(self, use_test=True):
+    def evaluate(self, use_test=False):
+        dl = self.train_dataloader
+        if use_test:
+            dl = self.test_dataloader
         with torch.no_grad():
             numerator = 0
             denominator = 0
-            for data_matrix, label in self.test_dataloader:
+            for data_matrix, label in dl:
                 output, _ = self.multivariable_prototypes(data_matrix.float())
                 sof = torch.softmax(output, 1)
                 prediction = torch.argmax(sof, 1)

@@ -11,7 +11,7 @@ from src.utils.utils import *
 def simulated_640_visualize(dataset, type, save):
     config = get_config_from_dataset(dataset)
     train_ds = get_ds(get_train_path_from_dataset(dataset), config['class_to_index'])
-    test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'])
+    test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'], False)
     if type == "latent-space":
         visualize_latent_space(config, test_ds, save)
     elif type == "single-var":

@@ -15,7 +15,12 @@ def get_config_from_dataset(dataset):
 def get_train_path_from_dataset(dataset):
     return "data/" + dataset + "/processed/train.ts"
 
-def get_test_path_from_dataset(dataset):
+def get_val_path_from_dataset(dataset):
+    return "data/" + dataset + "/processed/val.ts"
+
+def get_test_path_from_dataset(dataset, train=True):
+    if dataset.startswith("simulated") and train:
+        return "data/" + dataset + "/processed/val.ts"
     return "data/" + dataset + "/processed/test.ts"
 
 def load_encoders(config):

@@ -63,8 +63,11 @@ class EncoderTrainer(torch.nn.Module):
         plt.legend()
         plt.show()
 
-    def plot_latent_spaces(self):
-        for data_matrix, labels in self.test_dataloader:
+    def plot_latent_spaces(self, use_test=False):
+        dl = self.train_dataloader
+        if use_test:
+            dl = self.test_dataloader
+        for data_matrix, labels in dl:
             for i in range(self.num_variables):
                 plt.figure()
                 single_variable_data = data_matrix[:, :, i].unsqueeze(2).float()
