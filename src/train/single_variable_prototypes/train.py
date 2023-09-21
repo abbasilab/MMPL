@@ -31,8 +31,7 @@ def main(args):
         latent_dim=encoding_config['latent_dim'],
         num_layers=single_variable_prototypes_config['num_layers']
     )
-    print(wrapper)
-    exit()
+
 
     trainer = SingleVariablePrototypesTrainer(
         wrapper=wrapper,
@@ -73,7 +72,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
-    parser.add_argument("--eval", action=argparse.BooleanOptionalAction, default=False, help="Whether to show final test accuracy or not")
+    parser.add_argument("--eval", action=argparse.BooleanOptionalAction, default=True, help="Whether to show final test accuracy or not")
     parser.add_argument("--view", action=argparse.BooleanOptionalAction, default=False, help="Whether to view loss curves/latent spaces")
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the model or not")
 
