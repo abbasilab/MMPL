@@ -30,13 +30,14 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
     """
     Wrapper class that holds <num_variables> SingleVariablePrototypesModule classes
     """
-    def __init__(self, encoders, num_variables, num_classes, num_prototypes, latent_dim):
+    def __init__(self, encoders, num_variables, num_classes, num_prototypes, latent_dim, num_layers):
         super().__init__()
         self.encoders = encoders
         self.num_variables = num_variables
         self.num_classes = num_classes
         self.num_prototypes = num_prototypes
         self.latent_dim = latent_dim
+        self.num_layers = num_layers
 
         single_variable_prototype_modules = []
         for i in range(num_variables):
@@ -49,7 +50,15 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
             )
         self.single_variable_prototype_modules = torch.nn.ModuleList(single_variable_prototype_modules)
 
-        self.linear = torch.nn.Linear(num_variables * num_prototypes, num_classes)
+        if num_layers == 1:
+            self.linear = torch.nn.Linear(num_variables * num_prototypes, num_classes)
+        else:
+            layers = [torch.nn.Linear(num_variables * num_prototypes, num_classes), torch.nn.ReLU()]
+            for i in range(num_layers - 1):
+                layers.append(torch.nn.Linear(num_classes, num_classes))
+                if i != num_layers - 2:
+                    layers.append(torch.nn.ReLU())
+            self.linear = torch.nn.Sequential(*layers)
 
     def forward(self, x):
         """

@@ -25,6 +25,7 @@ encoding:
 
 single_variable_prototypes:
   num_prototypes: 4
+  num_layers: 2
   batch_size: 275
   lr: 0.01
   gamma: 0.999
@@ -36,6 +37,7 @@ single_variable_prototypes:
   save_dir: models//charactertrajectories_filtered/single_variable_prototypes/
 
 multivariable_prototypes:
+  num_layers: 2
   batch_size: 275
   lr: 0.01
   gamma: 0.999

@@ -146,6 +146,7 @@ encoding:
 
 single_variable_prototypes:
   num_prototypes: 4
+  num_layers: 3
   batch_size: 640
   lr: 0.01
   gamma: 0.999
@@ -157,6 +158,7 @@ single_variable_prototypes:
   save_dir: models/simulated_640/single_variable_prototypes/
 
 multivariable_prototypes:
+  num_layers: 3
   batch_size: 640
   lr: 0.01
   gamma: 0.999

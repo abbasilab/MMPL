@@ -28,8 +28,11 @@ def main(args):
         num_variables=config['num_variables'],
         num_classes=config['num_classes'],
         num_prototypes=single_variable_prototypes_config['num_prototypes'],
-        latent_dim=encoding_config['latent_dim']
+        latent_dim=encoding_config['latent_dim'],
+        num_layers=single_variable_prototypes_config['num_layers']
     )
+    print(wrapper)
+    exit()
 
     trainer = SingleVariablePrototypesTrainer(
         wrapper=wrapper,
@@ -38,6 +41,7 @@ def main(args):
         classes=config['classes'],
         num_variables=config['num_variables'],
         num_prototypes=single_variable_prototypes_config['num_prototypes'],
+        num_layers=single_variable_prototypes_config['num_layers'],
         batch_size=single_variable_prototypes_config['batch_size'],
         lr=single_variable_prototypes_config['lr'],
         gamma=single_variable_prototypes_config['gamma'],

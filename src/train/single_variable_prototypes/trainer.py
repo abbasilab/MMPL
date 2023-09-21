@@ -10,7 +10,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
     """
     Trains single-variable prototypes modules
     """
-    def __init__(self, wrapper, train_ds, test_ds, classes, num_variables, num_prototypes, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
+    def __init__(self, wrapper, train_ds, test_ds, classes, num_variables, num_prototypes, num_layers, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
         super(SingleVariablePrototypesTrainer, self).__init__()
         self.wrapper = wrapper
         self.train_ds = train_ds
@@ -18,6 +18,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         self.classes = classes
         self.num_variables = num_variables
         self.num_prototypes = num_prototypes
+        self.num_layers = num_layers
         self.batch_size = batch_size
         self.lr = lr
         self.gamma = gamma
