@@ -150,6 +150,9 @@ class MultivariableModuleTrainer(torch.nn.Module):
                 self.opt.zero_grad()
                 total_loss.backward()
                 self.opt.step()
+                with torch.no_grad():
+                    for param in self.multivariable_prototypes.linear.parameters():
+                        param.clamp_(min=0)
             self.sched.step()
 
     def plot_classification_loss(self):

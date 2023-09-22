@@ -16,13 +16,9 @@ class MultivariableModule(torch.nn.Module):
         self.prototypes = torch.nn.Parameter(torch.rand(num_classes, num_sv_prototypes*num_variables))
 
         if num_layers == 1:
-            self.linear = torch.nn.Linear(num_classes, num_classes)
+            self.linear = torch.nn.Linear(num_classes, num_classes, bias=False)
         else:
-            layers = [torch.nn.Linear(num_classes, num_classes), torch.nn.ReLU()]
-            for i in range(num_layers - 1):
-                layers.append(torch.nn.Linear(num_classes, num_classes))
-                if i != num_layers - 2:
-                    layers.append(torch.nn.ReLU())
+            layers = [torch.nn.Linear(num_classes, num_classes, bias=False) for _ in range(num_layers)]
             self.linear = torch.nn.Sequential(*layers)
 
     def forward(self, x):
