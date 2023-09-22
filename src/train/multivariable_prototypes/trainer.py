@@ -221,6 +221,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
                 denominator += data_matrix.shape[0]
             accuracy = float(numerator) / float(denominator)
             print("Accuracy: " + str(accuracy))
+        return accuracy
 
     def save(self, save_dir):
         save_name = save_dir + "multivariable_prototypes.pth"

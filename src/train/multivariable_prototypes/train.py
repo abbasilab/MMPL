@@ -35,7 +35,7 @@ def main(args):
     )
     wrapper.load_state_dict(torch.load(single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth"))
 
-    multivariable_prototypes = MultivariableModule(
+    multivariable_module = MultivariableModule(
         wrapper=wrapper,
         num_classes=config['num_classes'],
         num_variables=config['num_variables'],
@@ -44,7 +44,7 @@ def main(args):
     )
 
     trainer = MultivariableModuleTrainer(
-        multivariable_prototypes=multivariable_prototypes,
+        multivariable_prototypes=multivariable_module,
         train_ds=get_ds(get_train_path_from_dataset(args.dataset), config['class_to_index']),
         test_ds=get_ds(get_test_path_from_dataset(args.dataset), config['class_to_index']),
         classes=config['classes'],
