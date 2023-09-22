@@ -11,7 +11,7 @@ from src.utils.utils import *
 def simulated_640_visualize(dataset, type, save):
     config = get_config_from_dataset(dataset)
     train_ds = get_ds(get_train_path_from_dataset(dataset), config['class_to_index'])
-    test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'], False)
+    test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'])
     if type == "latent-space":
         visualize_latent_space(config, test_ds, save)
     elif type == "single-var":
@@ -136,8 +136,18 @@ def visualize_single_variable_prototypes(config, test_ds, save):
 def visualize_multivariable_prototypes(config, save):
     plt.figure()
 
-    multivariable_prototypes = load_multivariable_prototypes(config)
-    sns.heatmap(multivariable_prototypes.prototypes.detach().numpy())
+    multivariable_module = load_multivariable_prototypes(config)
+    sorted_prototypes = torch.zeros_like(multivariable_module.prototypes)
+    for var in range(multivariable_module.num_variables - 1):
+        start_idx = var*multivariable_module.num_sv_prototypes
+        end_idx = (var+1)*multivariable_module.num_sv_prototypes
+        blocks = multivariable_module.prototypes[:, start_idx:end_idx]
+        max_indices = blocks.argmax(dim=1)
+        sorted_indices = max_indices.argsort()
+        sorted_blocks = blocks[sorted_indices]
+        sorted_prototypes[:, start_idx:end_idx] = sorted_blocks
+
+    sns.heatmap(sorted_prototypes.detach().numpy())
 
     if save:
         save_name = "visualizations/simulated_640/multivariable_prototypes.pdf"

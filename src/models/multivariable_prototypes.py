@@ -15,7 +15,9 @@ class MultivariableModule(torch.nn.Module):
         # One prototype per class
         self.prototypes = torch.nn.Parameter(torch.rand(num_classes, num_sv_prototypes*num_variables))
 
-        if num_layers == 1:
+        if num_layers == 0:
+            self.linear = torch.nn.Identity()
+        elif num_layers == 1:
             self.linear = torch.nn.Linear(num_classes, num_classes, bias=False)
         else:
             layers = [torch.nn.Linear(num_classes, num_classes, bias=False) for _ in range(num_layers)]
