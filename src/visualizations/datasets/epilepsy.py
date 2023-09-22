@@ -116,8 +116,18 @@ def visualize_single_variable_prototypes(config, test_ds, save):
 def visualize_multivariable_prototypes(config, save):
     plt.figure()
 
-    multivariable_prototypes = load_multivariable_prototypes(config)
-    sns.heatmap(multivariable_prototypes.prototypes.detach().numpy())
+    multivariable_module = load_multivariable_prototypes(config)
+    sorted_prototypes = torch.zeros_like(multivariable_module.prototypes)
+    for var in range(multivariable_module.num_variables):
+        start_idx = var*multivariable_module.num_sv_prototypes
+        end_idx = (var+1)*multivariable_module.num_sv_prototypes
+        blocks = multivariable_module.prototypes[:, start_idx:end_idx]
+        max_indices = blocks.argmax(dim=1)
+        sorted_indices = max_indices.argsort()
+        sorted_blocks = blocks[sorted_indices]
+        sorted_prototypes[:, start_idx:end_idx] = sorted_blocks
+
+    sns.heatmap(sorted_prototypes.detach().numpy())
 
     if save:
         save_name = "visualizations/epilepsy/multivariable_prototypes.pdf"

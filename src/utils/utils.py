@@ -45,7 +45,8 @@ def load_single_variable_prototypes_wrapper(config):
         num_variables=config['num_variables'],
         num_classes=config['num_classes'],
         num_prototypes=single_variable_prototypes_config['num_prototypes'],
-        latent_dim=encoding_config['latent_dim']
+        latent_dim=encoding_config['latent_dim'],
+        num_layers=single_variable_prototypes_config['num_layers']
     )
     save_name = single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth"
     wrapper.load_state_dict(torch.load(save_name))
@@ -59,7 +60,8 @@ def load_multivariable_prototypes(config):
         wrapper=wrapper,
         num_classes=config['num_classes'],
         num_variables=config['num_variables'],
-        num_sv_prototypes=single_variable_prototypes_config['num_prototypes']
+        num_sv_prototypes=single_variable_prototypes_config['num_prototypes'],
+        num_layers=multivariable_config['num_layers']
     )
     save_name = multivariable_config['save_dir'] + "multivariable_prototypes.pth"
     multivariable_prototypes.load_state_dict(torch.load(save_name))
