@@ -152,7 +152,7 @@ single_variable_prototypes:
   gamma: 0.999
   epochs: 100
   l1: 1.0
-  l2: 10.0
+  l2: 100.0
   l3: 1.0
   l4: 10.0
   save_dir: models/simulated_6400/single_variable_prototypes/
