@@ -94,6 +94,16 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                                 found = True
                         prototypes[j] = candidate
 
+    def compute_pairwise_distances(self):
+        with torch.no_grad():
+            for module in self.wrapper.single_variable_prototype_modules:
+                prototypes = module.prototypes
+                num_prototypes = prototypes.size(0)
+                p1 = prototypes.unsqueeze(1).expand(num_prototypes, num_prototypes, -1)
+                p2 = prototypes.unsqueeze(0).expand(num_prototypes, num_prototypes, -1)
+                distances = torch.norm(p1 - p2, dim=2)
+                print(distances)
+
     def prototype_diversity_penalty(self):
         """
         Penalizes prototypes for being close together.
@@ -151,6 +161,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         return total_penalty / len(data)
     
     def train(self):
+        self.compute_pairwise_distances()
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
                 data_matrix, labels = data_matrix.to(device), labels.to(device)
@@ -179,6 +190,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                 total_loss.backward()
                 self.opt.step()
             self.sched.step()
+        self.compute_pairwise_distances()
 
     def plot_classification_loss(self):
         plt.figure()
