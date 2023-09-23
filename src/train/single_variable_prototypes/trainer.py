@@ -58,6 +58,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         with torch.no_grad():
             # Iterate through the variables
             for data_matrix, _ in self.train_dataloader:
+                data_matrix = data_matrix.to(device)
                 for i in range(self.num_variables):
                     single_variable_data = data_matrix[:, :, i].unsqueeze(2).float()
                     encoder = self.wrapper.single_variable_prototype_modules[i].encoder
