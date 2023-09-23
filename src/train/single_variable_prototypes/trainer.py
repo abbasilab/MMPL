@@ -57,7 +57,11 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         """
         with torch.no_grad():
             # Iterate through the variables
+            count = 0
             for data_matrix, _ in self.train_dataloader:
+                if count == 1:
+                    break
+                count += 1
                 data_matrix = data_matrix.to(device)
                 for i in range(self.num_variables):
                     single_variable_data = data_matrix[:, :, i].unsqueeze(2).float()
