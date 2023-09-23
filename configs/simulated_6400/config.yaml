@@ -140,22 +140,22 @@ encoding:
   batch_size: 640
   lr: 0.01
   gamma: 0.999
-  epochs: 500
-  m: 1.0
+  epochs: 750
+  m: 0.1
   save_dir: models/simulated_6400/encoding/
 
 single_variable_prototypes:
   num_prototypes: 4
-  num_layers: 3
+  num_layers: 1
   dropout: 0.2
   batch_size: 1280
   lr: 0.01
   gamma: 0.999
-  epochs: 100
+  epochs: 300
   l1: 1.0
   l2: 100.0
   l3: 1.0
-  l4: 10.0
+  l4: 1.0
   save_dir: models/simulated_6400/single_variable_prototypes/
 
 multivariable_prototypes:
