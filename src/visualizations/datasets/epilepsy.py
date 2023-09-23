@@ -127,7 +127,7 @@ def visualize_multivariable_prototypes(config, save):
         sorted_blocks = blocks[sorted_indices]
         sorted_prototypes[:, start_idx:end_idx] = sorted_blocks
 
-    sns.heatmap(sorted_prototypes.detach().numpy())
+    sns.heatmap(sorted_prototypes.cpu().detach().numpy())
 
     if save:
         save_name = "visualizations/epilepsy/multivariable_prototypes.pdf"

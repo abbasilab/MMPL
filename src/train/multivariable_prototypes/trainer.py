@@ -207,7 +207,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
 
     def plot_prototypes_heatmap(self):
         plt.figure()
-        sns.heatmap(self.multivariable_prototypes.prototypes.detach().numpy())
+        sns.heatmap(self.multivariable_prototypes.cpu().prototypes.detach().numpy())
         plt.show()
 
     def evaluate(self, use_test=False):
