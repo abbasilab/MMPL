@@ -162,7 +162,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
     
     def train(self):
         self.compute_pairwise_distances()
-        self.visualize_latent_space()
+        self.visualize_single_variable_prototypes()
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
                 data_matrix, labels = data_matrix.to(device), labels.to(device)
@@ -192,7 +192,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                 self.opt.step()
             self.sched.step()
         self.compute_pairwise_distances()
-        self.visualize_latent_space()
+        self.visualize_single_variable_prototypes()
 
     def plot_classification_loss(self):
         plt.figure()
@@ -239,13 +239,13 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         plt.legend()
         plt.show()
 
-    def visualize_latent_space(self):
+    def visualize_single_variable_prototypes(self):
         class_to_pattern_map = get_class_to_pattern_map()
         with torch.no_grad():
             classes = [i for i in range(64)]
-            colors = ['red', 'blue', 'green', 'orange']
+            colors = ['red', 'blue', 'green', 'orange', 'black']
             variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
-            pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4"]
+            pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
 
             fig, axs = plt.subplots(2, 2, figsize=(7, 7), sharex=True, sharey=True)
 
@@ -260,8 +260,11 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
 
                     encoder = self.wrapper.single_variable_prototype_modules[variable].encoder
                     for data_matrix, labels, in self.test_dataloader:
+                        data_matrix, labels = data_matrix.to(device), labels.to(device)
                         single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
                         embeddings = encoder(single_variable_data)
+                        embeddings = torch.concat([embeddings, self.wrapper.single_variable_prototype_modules[variable].prototypes], dim=0)
+                        labels = torch.concat([labels, len(classes)*torch.ones((self.wrapper.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0).cpu()
                         reducer = umap.UMAP()
                         embeddings_2d = reducer.fit_transform(embeddings.cpu())
 
@@ -273,8 +276,11 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                                 pattern = class_to_pattern_map[label][variable]
                                 ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
 
+                            idx = np.where(labels == len(classes))[0]
+                            ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', s=50, c='black')
+
             handles = [plt.Line2D([0], [0], marker='o', color='w', label=pattern_labels[c],
-                        markersize=10, markerfacecolor=colors[c]) for c in range(4)]
+                        markersize=10, markerfacecolor=colors[c]) for c in range(5)]
             fig.legend(handles=handles, ncol=5, loc='lower center')
             plt.tight_layout()
             fig.subplots_adjust(bottom=0.1)
