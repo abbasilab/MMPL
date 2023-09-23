@@ -248,7 +248,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                         single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
                         embeddings = encoder(single_variable_data)
                         embeddings = torch.concat([embeddings, self.wrapper.single_variable_prototype_modules[variable].prototypes], dim=0)
-                        labels = torch.concat([labels, len(classes)*torch.ones((self.wrapper.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
+                        labels = torch.concat([labels, len(classes)*torch.ones((self.wrapper.single_variable_prototype_modules[variable].prototypes.shape[0],)).to(device)], dim=0)
                         reducer = umap.UMAP()
                         embeddings_2d = reducer.fit_transform(embeddings.cpu())
 
