@@ -26,7 +26,7 @@ def visualize_latent_space(config, test_ds, save):
     encoders = load_encoders(config)
     for encoder in encoders:
         encoder.eval()
-    test_loader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
+    test_loader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False, pin_memory=True)
     class_to_pattern_map = get_class_to_pattern_map()
     with torch.no_grad():
         classes = [i for i in range(64)]
@@ -80,7 +80,7 @@ def visualize_single_variable_prototypes(config, test_ds, save):
     for encoder in encoders:
         encoder.eval()
     wrapper.eval()
-    test_loader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
+    test_loader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False, pin_memory=True)
     class_to_pattern_map = get_class_to_pattern_map()
     with torch.no_grad():
         classes = [i for i in range(64)]
@@ -157,7 +157,7 @@ def visualize_multivariable_prototypes(config, save):
 def visualize_projected_prototypes(config, train_ds, save):
     multivariable_module = load_multivariable_prototypes(config)
     multivariable_module.eval()
-    train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False)
+    train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False, pin_memory=True)
     fig, axs = plt.subplots(4, 3, figsize=(6.75, 9))
     colors = ['red', 'green', 'blue', 'orange']
     classes = ['Epilepsy', 'Running', 'Walking', "Sawing"]

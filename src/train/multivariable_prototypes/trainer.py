@@ -5,9 +5,8 @@ import numpy as np
 import seaborn as sns
 import torch
 from tqdm import tqdm
-import umap
 
-from src.models.multivariable_prototypes import MultivariableModule
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class MultivariableModuleTrainer(torch.nn.Module):
     """
@@ -31,8 +30,8 @@ class MultivariableModuleTrainer(torch.nn.Module):
         self.l3 = l3
         self.l4 = l4
 
-        self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-        self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
+        self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=True)
+        self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False, pin_memory=True)
 
         # Disable gradients for single variable portions
         for param in self.multivariable_prototypes.wrapper.parameters():
@@ -56,6 +55,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         with torch.no_grad():
             # Iterate through the variables
             for data_matrix, _ in self.train_dataloader:
+                data_matrix = data_matrix.to(device)
                 for i in range(self.num_variables):
                     wrapper = self.multivariable_prototypes.wrapper
                     prototypes = self.multivariable_prototypes.prototypes
@@ -127,6 +127,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
     def train(self):
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
                 output, sv_sims = self.multivariable_prototypes(data_matrix.float())
 
                 classification_loss = self.classification_loss_fn(output, labels)
@@ -212,12 +213,13 @@ class MultivariableModuleTrainer(torch.nn.Module):
         with torch.no_grad():
             numerator = 0
             denominator = 0
-            for data_matrix, label in dl:
+            for data_matrix, labels in dl:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
                 output, _ = self.multivariable_prototypes(data_matrix.float())
                 sof = torch.softmax(output, 1)
                 prediction = torch.argmax(sof, 1)
 
-                numerator += torch.sum(prediction.eq(label).int())
+                numerator += torch.sum(prediction.eq(labels).int())
                 denominator += data_matrix.shape[0]
             accuracy = float(numerator) / float(denominator)
             print("Accuracy: " + str(accuracy))

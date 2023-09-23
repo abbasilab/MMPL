@@ -8,6 +8,8 @@ from src.models.single_variable_prototypes import SingleVariablePrototypesWrappe
 from src.train.single_variable_prototypes.trainer import SingleVariablePrototypesTrainer
 from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def main(args):
     config = get_config_from_dataset(args.dataset)
     encoding_config = config['encoding']
@@ -19,8 +21,8 @@ def main(args):
             input_dim=encoding_config['input_dim'],
             hidden_dim=encoding_config['hidden_dim'],
             latent_dim=encoding_config['latent_dim']
-        )
-        encoder.load_state_dict(torch.load(encoding_config['save_dir'] + "encoder" + str(i+1) + ".pth"))
+        ).to(device)
+        encoder.load_state_dict(torch.load(encoding_config['save_dir'] + "encoder" + str(i+1) + ".pth", map_location=device))
         encoders.append(encoder)
 
     wrapper = SingleVariablePrototypesWrapper(
@@ -30,7 +32,7 @@ def main(args):
         num_prototypes=single_variable_prototypes_config['num_prototypes'],
         latent_dim=encoding_config['latent_dim'],
         num_layers=single_variable_prototypes_config['num_layers']
-    )
+    ).to(device)
 
 
     trainer = SingleVariablePrototypesTrainer(
@@ -49,7 +51,7 @@ def main(args):
         l2=single_variable_prototypes_config['l2'],
         l3=single_variable_prototypes_config['l3'],
         l4=single_variable_prototypes_config['l4']
-    )
+    ).to(device)
 
     trainer.initialize_prototypes()
     trainer.train()

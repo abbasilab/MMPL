@@ -1,5 +1,7 @@
 import torch
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 class ContrastiveLoss(torch.nn.Module):
     """
     Loss Function used for single-variable encoding
@@ -13,8 +15,8 @@ class ContrastiveLoss(torch.nn.Module):
         labels: (batch_size,)
         """
         batch_size = data.shape[0]
-        rangeset = torch.arange(batch_size)
-        all_combos = torch.combinations(rangeset)
+        rangeset = torch.arange(batch_size).to(device)
+        all_combos = torch.combinations(rangeset).to(device)
         same_labels = all_combos[(labels[all_combos[:, 0]] == labels[all_combos[:, 1]]).nonzero()].squeeze()
         opposite_labels = all_combos[(labels[all_combos[:, 0]] != labels[all_combos[:, 1]]).nonzero()].squeeze()
         same_distances = torch.linalg.norm(data[same_labels][:, 0] - data[same_labels][:, 1], dim=1)

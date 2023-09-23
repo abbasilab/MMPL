@@ -9,6 +9,8 @@ from src.models.multivariable_prototypes import MultivariableModule
 from src.train.multivariable_prototypes.trainer import MultivariableModuleTrainer
 from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def main(args):
     config = get_config_from_dataset(args.dataset)
     encoding_config = config['encoding']
@@ -21,8 +23,8 @@ def main(args):
             input_dim=encoding_config['input_dim'],
             hidden_dim=encoding_config['hidden_dim'],
             latent_dim=encoding_config['latent_dim']
-        )
-        encoder.load_state_dict(torch.load(encoding_config['save_dir'] + "encoder" + str(i+1) + ".pth"))
+        ).to(device)
+        encoder.load_state_dict(torch.load(encoding_config['save_dir'] + "encoder" + str(i+1) + ".pth", map_location=device))
         encoders.append(encoder)
 
     wrapper = SingleVariablePrototypesWrapper(
@@ -32,8 +34,8 @@ def main(args):
         num_prototypes=single_variable_prototypes_config['num_prototypes'],
         latent_dim=encoding_config['latent_dim'],
         num_layers=single_variable_prototypes_config['num_layers']
-    )
-    wrapper.load_state_dict(torch.load(single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth"))
+    ).to(device)
+    wrapper.load_state_dict(torch.load(single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth", map_location=device))
 
     multivariable_module = MultivariableModule(
         wrapper=wrapper,
@@ -41,7 +43,7 @@ def main(args):
         num_variables=config['num_variables'],
         num_sv_prototypes=single_variable_prototypes_config['num_prototypes'],
         num_layers=multivariable_config['num_layers']
-    )
+    ).to(device)
 
     trainer = MultivariableModuleTrainer(
         multivariable_prototypes=multivariable_module,
@@ -59,7 +61,7 @@ def main(args):
         l2=multivariable_config['l2'],
         l3=multivariable_config['l3'],
         l4=multivariable_config['l4']
-    )
+    ).to(device)
 
     trainer.initialize_prototypes()
     trainer.train()

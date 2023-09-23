@@ -8,6 +8,8 @@ import umap
 
 from src.utils.utils import get_class_to_pattern_map
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 class SingleVariablePrototypesTrainer(torch.nn.Module):
     """
     Trains single-variable prototypes modules
@@ -145,6 +147,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
     def train(self):
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
                 _, classification_output = self.wrapper(data_matrix.float())
 
                 classification_loss = self.classification_loss_fn(classification_output, labels)
@@ -240,6 +243,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
 
                     encoder = self.wrapper.single_variable_prototype_modules[variable].encoder
                     for data_matrix, labels, in ds:
+                        data_matrix, labels = data_matrix.to(device), labels.to(device)
                         single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
                         embeddings = encoder(single_variable_data)
                         embeddings = torch.concat([embeddings, self.wrapper.single_variable_prototype_modules[variable].prototypes], dim=0)
@@ -272,12 +276,13 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         with torch.no_grad():
             numerator = 0
             denominator = 0
-            for data_matrix, label in dl:
+            for data_matrix, labels in dl:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
                 _, classification_output = self.wrapper(data_matrix.float())
                 sof = torch.softmax(classification_output, 1)
                 prediction = torch.argmax(sof, 1)
 
-                numerator += torch.sum(prediction.eq(label).int())
+                numerator += torch.sum(prediction.eq(labels).int())
                 denominator += data_matrix.shape[0]
             accuracy = float(numerator) / float(denominator)
             print("Accuracy: " + str(accuracy))

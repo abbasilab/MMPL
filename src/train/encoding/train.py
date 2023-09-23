@@ -1,9 +1,13 @@
 import argparse
 
+import torch
+
 from src.data.data import get_ds
 from src.models.encoding import Encoder
 from src.train.encoding.trainer import EncoderTrainer
 from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main(args):
     config = get_config_from_dataset(args.dataset)
@@ -28,24 +32,22 @@ def main(args):
         gamma=encoding_config['gamma'],
         epochs=encoding_config['epochs'],
         m=encoding_config['m']
-    )
+    ).to(device)
 
     trainer.train()
 
     if args.view:
         trainer.plot_contrastive_losses()
-        trainer.plot_latent_spaces(args.use_test)
+        trainer.plot_latent_spaces()
 
     if args.save:
         trainer.save(encoding_config['save_dir'])
-        trainer.load(encoding_config['save_dir'])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
     parser.add_argument("--view", action=argparse.BooleanOptionalAction, default=False, help="Whether to view loss curves/latent spaces")
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the model or not")
-    parser.add_argument("--use-test", action=argparse.BooleanOptionalAction, default=False, help="Whether to use test data for visualizing")
 
     args = parser.parse_args()
     main(args)

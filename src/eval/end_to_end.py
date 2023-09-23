@@ -1,5 +1,6 @@
 import argparse
 
+import torch
 from tqdm import tqdm
 
 from src.data.data import get_ds
@@ -10,6 +11,8 @@ from src.train.single_variable_prototypes.trainer import SingleVariablePrototype
 from src.models.multivariable_prototypes import MultivariableModule
 from src.train.multivariable_prototypes.trainer import MultivariableModuleTrainer
 from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
+
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main(args):
     config = get_config_from_dataset(args.dataset)
@@ -25,7 +28,7 @@ def main(args):
                 input_dim=encoding_config['input_dim'],
                 hidden_dim=encoding_config['hidden_dim'],
                 latent_dim=encoding_config['latent_dim']
-            ))
+            ).to(device))
         
         trainer = EncoderTrainer(
             encoders=encoders,
@@ -38,7 +41,7 @@ def main(args):
             gamma=encoding_config['gamma'],
             epochs=encoding_config['epochs'],
             m=encoding_config['m']
-        )
+        ).to(device)
 
         trainer.train()
 
@@ -49,7 +52,7 @@ def main(args):
             num_prototypes=single_variable_prototypes_config['num_prototypes'],
             latent_dim=encoding_config['latent_dim'],
             num_layers=single_variable_prototypes_config['num_layers']
-        )
+        ).to(device)
 
 
         trainer = SingleVariablePrototypesTrainer(
@@ -68,7 +71,7 @@ def main(args):
             l2=single_variable_prototypes_config['l2'],
             l3=single_variable_prototypes_config['l3'],
             l4=single_variable_prototypes_config['l4']
-        )
+        ).to(device)
 
         trainer.initialize_prototypes()
         trainer.train()
@@ -79,7 +82,7 @@ def main(args):
             num_variables=config['num_variables'],
             num_sv_prototypes=single_variable_prototypes_config['num_prototypes'],
             num_layers=multivariable_config['num_layers']
-        )
+        ).to(device)
 
         trainer = MultivariableModuleTrainer(
             multivariable_prototypes=multivariable_module,
@@ -97,7 +100,7 @@ def main(args):
             l2=multivariable_config['l2'],
             l3=multivariable_config['l3'],
             l4=multivariable_config['l4']
-        )
+        ).to(device)
 
         trainer.initialize_prototypes()
         trainer.train()
@@ -105,7 +108,8 @@ def main(args):
         accuracy = trainer.evaluate(use_test=True)
         accuracies.append(accuracy)
     
-    print(accuracies)
+    accuracies = torch.Tensor(accuracies)
+    print(accuracies.mean(), accuracies.std())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

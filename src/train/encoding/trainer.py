@@ -6,6 +6,8 @@ import umap
 
 from src.models.encoding import ContrastiveLoss
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 class EncoderTrainer(torch.nn.Module):
     """
     Trains single-variable encoders.
@@ -23,8 +25,8 @@ class EncoderTrainer(torch.nn.Module):
         self.epochs = epochs
         self.m = m
 
-        self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-        self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
+        self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=True)
+        self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False, pin_memory=True)
 
         self.opts = [torch.optim.Adam(self.encoders[i].parameters(), lr=lr) for i in range(num_variables)]
 
@@ -40,6 +42,7 @@ class EncoderTrainer(torch.nn.Module):
         for epoch in tqdm(range(self.epochs)):
             for i in range(self.num_variables):
                 for data_matrix, labels in self.train_dataloader:
+                    data_matrix, labels = data_matrix.to(device), labels.to(device)
                     single_variable_data = data_matrix[:, :, i].unsqueeze(2).float()
                     self.opts[i].zero_grad()
                     embeddings = self.encoders[i](single_variable_data)
@@ -68,6 +71,7 @@ class EncoderTrainer(torch.nn.Module):
         if use_test:
             dl = self.test_dataloader
         for data_matrix, labels in dl:
+            data_matrix, labels = data_matrix.to(device), labels.to(device)
             for i in range(self.num_variables):
                 plt.figure()
                 single_variable_data = data_matrix[:, :, i].unsqueeze(2).float()
