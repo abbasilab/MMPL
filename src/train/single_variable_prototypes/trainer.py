@@ -249,7 +249,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                         embeddings = torch.concat([embeddings, self.wrapper.single_variable_prototype_modules[variable].prototypes], dim=0)
                         labels = torch.concat([labels, len(classes)*torch.ones((self.wrapper.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
                         reducer = umap.UMAP()
-                        embeddings_2d = reducer.fit_transform(embeddings)
+                        embeddings_2d = reducer.fit_transform(embeddings.cpu())
 
                         if variable == 3:
                             ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')

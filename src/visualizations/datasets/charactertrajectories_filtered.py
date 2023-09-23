@@ -41,7 +41,7 @@ def visualize_latent_space(config, test_ds, save):
                 single_variable_data = data_matrix[:, :, j].unsqueeze(2).float()
                 embeddings = encoder(single_variable_data)
                 reducer = umap.UMAP()
-                embeddings_2d = reducer.fit_transform(embeddings)
+                embeddings_2d = reducer.fit_transform(embeddings.cpu())
 
                 for k, label in enumerate(classes):
                     idx = np.where(labels == label)[0]
@@ -91,7 +91,7 @@ def visualize_single_variable_prototypes(config, test_ds, save):
                 embeddings = torch.concat([embeddings, wrapper.single_variable_prototype_modules[j].prototypes], dim=0)
                 labels = torch.concat([labels, len(classes)*torch.ones((wrapper.single_variable_prototype_modules[j].prototypes.shape[0],))], dim=0)
                 reducer = umap.UMAP()
-                embeddings_2d = reducer.fit_transform(embeddings)
+                embeddings_2d = reducer.fit_transform(embeddings.cpu())
 
                 for k, label in enumerate(classes):
                     idx = np.where(labels == label)[0]
