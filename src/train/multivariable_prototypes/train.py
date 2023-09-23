@@ -33,7 +33,8 @@ def main(args):
         num_classes=config['num_classes'],
         num_prototypes=single_variable_prototypes_config['num_prototypes'],
         latent_dim=encoding_config['latent_dim'],
-        num_layers=single_variable_prototypes_config['num_layers']
+        num_layers=single_variable_prototypes_config['num_layers'],
+        dropout=single_variable_prototypes_config['dropout'],
     ).to(device)
     wrapper.load_state_dict(torch.load(single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth", map_location=device))
 

@@ -46,7 +46,8 @@ def load_single_variable_prototypes_wrapper(config):
         num_classes=config['num_classes'],
         num_prototypes=single_variable_prototypes_config['num_prototypes'],
         latent_dim=encoding_config['latent_dim'],
-        num_layers=single_variable_prototypes_config['num_layers']
+        num_layers=single_variable_prototypes_config['num_layers'],
+        dropout=single_variable_prototypes_config['dropout'],
     )
     save_name = single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth"
     wrapper.load_state_dict(torch.load(save_name))
