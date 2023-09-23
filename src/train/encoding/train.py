@@ -36,12 +36,12 @@ def main(args):
 
     trainer.train()
 
+    if args.save:
+        trainer.save(encoding_config['save_dir'])
+
     if args.view:
         trainer.plot_contrastive_losses()
         trainer.plot_latent_spaces()
-
-    if args.save:
-        trainer.save(encoding_config['save_dir'])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

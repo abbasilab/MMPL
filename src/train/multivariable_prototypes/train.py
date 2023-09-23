@@ -68,17 +68,15 @@ def main(args):
 
     trainer.evaluate()
 
+    if args.save:
+        trainer.save(multivariable_config['save_dir'])
+
     if args.view:
         trainer.plot_classification_loss()
         trainer.plot_diversity_penalties()
         trainer.plot_similarity_penalties()
         trainer.plot_coverage_penalties()
         trainer.plot_prototypes_heatmap()
-
-    if args.save:
-        trainer.save(multivariable_config['save_dir'])
-        trainer.load(multivariable_config['save_dir'])
-        trainer.plot_classification_loss()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

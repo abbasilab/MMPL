@@ -58,15 +58,15 @@ def main(args):
 
     trainer.evaluate()
 
+    if args.save:
+        trainer.save(single_variable_prototypes_config['save_dir'])
+
     if args.view:
         trainer.plot_classification_loss()
         trainer.plot_diversity_penalties()
         trainer.plot_similarity_penalties()
         trainer.plot_coverage_penalties()
         trainer.plot_all_latent_spaces_with_prototypes()
-
-    if args.save:
-        trainer.save(single_variable_prototypes_config['save_dir'])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
