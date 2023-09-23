@@ -162,6 +162,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
     
     def train(self):
         self.compute_pairwise_distances()
+        self.visualize_latent_space()
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
                 data_matrix, labels = data_matrix.to(device), labels.to(device)
@@ -191,6 +192,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                 self.opt.step()
             self.sched.step()
         self.compute_pairwise_distances()
+        self.visualize_latent_space()
 
     def plot_classification_loss(self):
         plt.figure()
@@ -236,6 +238,47 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         plt.ylabel("Loss")
         plt.legend()
         plt.show()
+
+    def visualize_latent_space(self):
+        class_to_pattern_map = get_class_to_pattern_map()
+        with torch.no_grad():
+            classes = [i for i in range(64)]
+            colors = ['red', 'blue', 'green', 'orange']
+            variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
+            pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4"]
+
+            fig, axs = plt.subplots(2, 2, figsize=(7, 7), sharex=True, sharey=True)
+
+            for i in range(2):
+                for j in range(2):
+                    variable = i*2 + j
+
+                    ax = axs[i, j]
+                    ax.set_title(variable_names[variable])
+                    ax.set_xticks([])
+                    ax.set_yticks([])
+
+                    encoder = self.wrapper.single_variable_prototype_modules[variable].encoder
+                    for data_matrix, labels, in self.test_dataloader:
+                        single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
+                        embeddings = encoder(single_variable_data)
+                        reducer = umap.UMAP()
+                        embeddings_2d = reducer.fit_transform(embeddings.cpu())
+
+                        if variable == 3:
+                            ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')
+                        else:
+                            for k, label in enumerate(classes):
+                                idx = np.where(labels == label)[0]
+                                pattern = class_to_pattern_map[label][variable]
+                                ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
+
+            handles = [plt.Line2D([0], [0], marker='o', color='w', label=pattern_labels[c],
+                        markersize=10, markerfacecolor=colors[c]) for c in range(4)]
+            fig.legend(handles=handles, ncol=5, loc='lower center')
+            plt.tight_layout()
+            fig.subplots_adjust(bottom=0.1)
+            plt.show()
 
     def plot_all_latent_spaces_with_prototypes(self, use_test=False):
         ds = self.train_dataloader

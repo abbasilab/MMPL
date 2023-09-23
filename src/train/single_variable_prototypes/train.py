@@ -68,7 +68,6 @@ def main(args):
         trainer.plot_diversity_penalties()
         trainer.plot_similarity_penalties()
         trainer.plot_coverage_penalties()
-        trainer.plot_all_latent_spaces_with_prototypes()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
