@@ -147,7 +147,7 @@ encoding:
 single_variable_prototypes:
   num_prototypes: 4
   num_layers: 3
-  batch_size: 640
+  batch_size: 1280
   lr: 0.01
   gamma: 0.999
   epochs: 100
@@ -159,7 +159,7 @@ single_variable_prototypes:
 
 multivariable_prototypes:
   num_layers: 1
-  batch_size: 640
+  batch_size: 1280
   lr: 0.01
   gamma: 0.999
   epochs: 100
