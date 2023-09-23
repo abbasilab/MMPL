@@ -71,7 +71,8 @@ def main(args):
             l1=single_variable_prototypes_config['l1'],
             l2=single_variable_prototypes_config['l2'],
             l3=single_variable_prototypes_config['l3'],
-            l4=single_variable_prototypes_config['l4']
+            l4=single_variable_prototypes_config['l4'],
+            d_min=single_variable_prototypes_config['d_min']
         ).to(device)
 
         trainer.initialize_prototypes()

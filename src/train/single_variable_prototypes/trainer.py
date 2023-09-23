@@ -14,7 +14,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
     """
     Trains single-variable prototypes modules
     """
-    def __init__(self, wrapper, train_ds, test_ds, classes, num_variables, num_prototypes, num_layers, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
+    def __init__(self, wrapper, train_ds, test_ds, classes, num_variables, num_prototypes, num_layers, batch_size, lr, gamma, epochs, l1, l2, l3, l4, d_min):
         super(SingleVariablePrototypesTrainer, self).__init__()
         self.wrapper = wrapper
         self.train_ds = train_ds
@@ -31,6 +31,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         self.l2 = l2
         self.l3 = l3
         self.l4 = l4
+        self.d_min = d_min
 
         self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
         self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
@@ -106,7 +107,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             for j in range(num_prototypes):
                 for k in range(j + 1, num_prototypes):
                     distance = torch.norm(prototypes[j] - prototypes[k])
-                    term = torch.pow(torch.max(torch.tensor(0.0), 1.0 - distance), 2)
+                    term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
                     penalty += term
 
             total_penalty += penalty
