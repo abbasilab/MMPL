@@ -111,16 +111,16 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         total_penalty = 0
         for i in range(self.num_variables):
             prototypes = self.wrapper.single_variable_prototype_modules[i].prototypes
-            num_prototypes = prototypes.size(0)
-            penalty = 0.0
-
-            for j in range(num_prototypes):
-                for k in range(j + 1, num_prototypes):
-                    distance = torch.norm(prototypes[j] - prototypes[k])
-                    term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
-                    penalty += term
-
-            total_penalty += penalty
+            num_prototypes = prototypes.shape[0]
+            collect = []
+            for i in range(num_prototypes - 1):
+                this_prototype = prototypes[i]
+                without_this = prototypes[i + 1:]
+                this_prototype = this_prototype.unsqueeze(0).repeat_interleave(without_this.shape[0], 0)
+                collect.append(torch.min(torch.square(torch.norm(this_prototype-without_this, dim=1))))
+            collect = torch.stack(collect)
+            mean = torch.pow(torch.log(torch.mean(collect)), -1)
+            total_penalty += mean
         return total_penalty
     
     def prototype_similarity_penalty(self, data):
@@ -148,17 +148,13 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         total_penalty = 0
         for i in range(self.num_variables):
             single_variable_data = data[:, :, i].unsqueeze(2).float()
-
             embeddings = self.wrapper.single_variable_prototype_modules[i].encoder(single_variable_data)
-            prototypes = self.wrapper.single_variable_prototype_modules[i].prototypes
-            embeddings_expanded = embeddings.unsqueeze(1)
-            prototypes_expanded = prototypes.unsqueeze(0) 
-
-            pairwise_distances = torch.norm(embeddings_expanded - prototypes_expanded, dim=2)
-            closest_distances = torch.min(pairwise_distances, dim=1)[0]
-            total_distance = torch.sum(closest_distances)
-            total_penalty += total_distance
-        return total_penalty / len(data)
+            embeddings = embeddings.unsqueeze(1).repeat_interleave(self.wrapper.single_variable_prototype_modules[i].num_prototypes,1)
+            distances = embeddings - self.wrapper.single_variable_prototype_modules[i].prototypes
+            distances = torch.norm(distances, dim=2)
+            distances = torch.min(distances, dim=0)[0]
+            total_penalty += torch.mean(distances)
+        return total_penalty
     
     def train(self):
         self.compute_pairwise_distances()
