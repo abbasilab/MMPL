@@ -191,7 +191,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                 total_loss.backward()
                 self.opt.step()
             self.sched.step()
-            self.visualize_single_variable_prototypes()
+            # self.visualize_single_variable_prototypes()
         self.compute_pairwise_distances()
         self.visualize_single_variable_prototypes()
 
