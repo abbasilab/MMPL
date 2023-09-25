@@ -26,6 +26,7 @@ encoding:
 single_variable_prototypes:
   num_prototypes: 4
   num_layers: 2
+  dropout: 0.0
   batch_size: 275
   lr: 0.01
   gamma: 0.999

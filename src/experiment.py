@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
 
@@ -6,21 +8,11 @@ from src.utils.utils import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-dataset = "simulated_6400"
-
-config = get_config_from_dataset(dataset)
-train_ds = get_ds(get_train_path_from_dataset(dataset), config['class_to_index'])
-test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'])
-train_dataloader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=True)
-test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
-
-wrapper = load_single_variable_prototypes_wrapper(config).to(device)
-
-def intra_cluster_distance(wrapper):
+def intra_cluster_distance(wrapper, dl):
     class_to_pattern = get_class_to_pattern_map().to(device)
     wrapper.eval()
     with torch.no_grad():
-        for data_matrix, labels in test_dataloader:
+        for data_matrix, labels in dl:
             data_matrix, labels = data_matrix.to(device), labels.to(device)
             for var in range(wrapper.num_variables - 1):
                 patterns = class_to_pattern[labels, var].to(device)
@@ -46,3 +38,24 @@ def intra_cluster_distance(wrapper):
                 print(pattern_to_distance)
 
 intra_cluster_distance(wrapper)
+
+def main(args):
+    dataset = args.dataset
+    config = get_config_from_dataset(dataset)
+    train_ds = get_ds(get_train_path_from_dataset(dataset), config['class_to_index'])
+    test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'])
+    train_dataloader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=True)
+    test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
+
+    wrapper = load_single_variable_prototypes_wrapper(config).to(device)
+
+    if args.type == "intra":
+        intra_cluster_distance(wrapper, test_dataloader)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
+    parser.add_argument("--type", type=str, help="What function do you want to call")
+
+    args = parser.parse_args()
+    main(args)
