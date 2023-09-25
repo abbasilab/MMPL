@@ -57,7 +57,7 @@ def visualize_latent_space(config, test_ds, save):
                     else:
                         for k, label in enumerate(classes):
                             idx = np.where(labels == label)[0]
-                            pattern = class_to_pattern_map[label][variable]
+                            pattern = int(class_to_pattern_map[label][variable])
                             ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
 
         handles = [plt.Line2D([0], [0], marker='o', color='w', label=pattern_labels[c],
