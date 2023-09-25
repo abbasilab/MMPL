@@ -74,4 +74,4 @@ def get_class_to_pattern_map():
         for j in range(4):
             for k in range(4):
                 class_to_pattern_map.append([i, j, k])
-    return class_to_pattern_map
+    return torch.Tensor(class_to_pattern_map)
