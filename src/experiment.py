@@ -8,16 +8,17 @@ from src.utils.utils import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-def intra_cluster_distance(wrapper, dl, dataset):
+def intra_cluster_distance(encoders, dl, dataset):
     class_to_pattern = get_class_to_pattern_map().to(device)
-    wrapper.eval()
+    for encoder in encoders:
+        encoder.eval()
     with torch.no_grad():
         for data_matrix, labels in dl:
             data_matrix, labels = data_matrix.to(device), labels.to(device)
             if dataset.startswith("simulated"):
-                for var in range(wrapper.num_variables - 1):
+                for var in range(len(encoders) - 1):
                     patterns = class_to_pattern[labels, var].to(device)
-                    encoder = wrapper.single_variable_prototype_modules[var].encoder   
+                    encoder = encoders[var]
                     single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
                     embeddings = encoder(single_variable_data)
 
@@ -38,8 +39,8 @@ def intra_cluster_distance(wrapper, dl, dataset):
                     print("variable: " + str(var))
                     print(pattern_to_distance)
             else:
-                for var in range(wrapper.num_variables):
-                    encoder = wrapper.single_variable_prototype_modules[var].encoder   
+                for var in range(len(encoders)):
+                    encoder = encoders[var]  
                     single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
                     embeddings = encoder(single_variable_data)
 
@@ -60,16 +61,17 @@ def intra_cluster_distance(wrapper, dl, dataset):
                     print("variable: " + str(var))
                     print(labels_to_distance)
 
-def inter_cluster_distance(wrapper, dl, dataset):
+def inter_cluster_distance(encoders, dl, dataset):
     class_to_pattern = get_class_to_pattern_map().to(device)
-    wrapper.eval()
+    for encoder in encoders:
+        encoder.eval()
     with torch.no_grad():
         for data_matrix, labels in dl:
             data_matrix, labels = data_matrix.to(device), labels.to(device)
             if dataset.startswith("simulated"):
-                for var in range(wrapper.num_variables - 1):
+                for var in range(len(encoders) - 1):
                     patterns = class_to_pattern[labels, var].to(device)
-                    encoder = wrapper.single_variable_prototype_modules[var].encoder   
+                    encoder = encoders[var]
                     single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
                     embeddings = encoder(single_variable_data)
 
@@ -85,8 +87,8 @@ def inter_cluster_distance(wrapper, dl, dataset):
                     distance_matrix = torch.cdist(centroids, centroids, p=2)
                     print(distance_matrix)
             else:
-                for var in range(wrapper.num_variables):
-                    encoder = wrapper.single_variable_prototype_modules[var].encoder   
+                for var in range(len(encoders)):
+                    encoder = encoders[var]
                     single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
                     embeddings = encoder(single_variable_data)
 
@@ -102,6 +104,59 @@ def inter_cluster_distance(wrapper, dl, dataset):
                     distance_matrix = torch.cdist(centroids, centroids, p=2)
                     print(distance_matrix)
 
+def max_intra_cluster_distance(encoders, dl, dataset):
+    class_to_pattern = get_class_to_pattern_map().to(device)
+    for encoder in encoders:
+        encoder.eval()
+    with torch.no_grad():
+        for data_matrix, labels in dl:
+            data_matrix, labels = data_matrix.to(device), labels.to(device)
+            if dataset.startswith("simulated"):
+                for var in range(len(encoders) - 1):
+                    patterns = class_to_pattern[labels, var].to(device)
+                    encoder = encoders[var]
+                    single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
+                    embeddings = encoder(single_variable_data)
+
+                    unique_patterns = torch.unique(patterns)
+                    pattern_to_distance = {}
+
+                    for pattern in unique_patterns:
+                        mask = patterns == pattern
+                        cluster_points = embeddings[mask]
+                        expanded_cluster_points_1 = cluster_points.unsqueeze(1)
+                        expanded_cluster_points_2 = cluster_points.unsqueeze(0)
+                        
+                        distances = torch.norm(expanded_cluster_points_1 - expanded_cluster_points_2, dim=2)
+
+                        max_distance = torch.max(distances.tril(diagonal=-1))
+
+                        pattern_to_distance[pattern.item()] = max_distance.item()
+                    print("variable: " + str(var))
+                    print(pattern_to_distance)
+            else:
+                for var in range(len(encoders)):
+                    encoder = encoders[var]
+                    single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
+                    embeddings = encoder(single_variable_data)
+
+                    unique_labels = torch.unique(labels)
+                    labels_to_distance = {}
+
+                    for label in unique_labels:
+                        mask = labels == label
+                        cluster_points = embeddings[mask]
+                        expanded_cluster_points_1 = cluster_points.unsqueeze(1)
+                        expanded_cluster_points_2 = cluster_points.unsqueeze(0)
+                        
+                        distances = torch.norm(expanded_cluster_points_1 - expanded_cluster_points_2, dim=2)
+
+                        max_distance = torch.max(distances.tril(diagonal=-1))
+
+                        labels_to_distance[label.item()] = max_distance.item()
+                    print("variable: " + str(var))
+                    print(labels_to_distance)
+
 def main(args):
     dataset = args.dataset
     config = get_config_from_dataset(dataset)
@@ -111,11 +166,16 @@ def main(args):
     test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
 
     wrapper = load_single_variable_prototypes_wrapper(config).to(device)
+    encoders = load_encoders(config)
+    for encoder in encoders:
+        encoder.to(device)
 
     if args.type == "intra":
-        intra_cluster_distance(wrapper, test_dataloader, dataset)
+        intra_cluster_distance(encoders, test_dataloader, dataset)
     elif args.type == "inter":
-        inter_cluster_distance(wrapper, test_dataloader, dataset)
+        inter_cluster_distance(encoders, test_dataloader, dataset)
+    elif args.type == "max-intra":
+        max_intra_cluster_distance(encoders, test_dataloader, dataset)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
