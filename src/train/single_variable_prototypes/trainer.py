@@ -162,7 +162,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
     
     def train(self):
         self.compute_pairwise_distances()
-        # self.visualize_single_variable_prototypes()
+        self.visualize_single_variable_prototypes()
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
                 data_matrix, labels = data_matrix.to(device), labels.to(device)
@@ -193,7 +193,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             self.sched.step()
             # self.visualize_single_variable_prototypes()
         self.compute_pairwise_distances()
-        # self.visualize_single_variable_prototypes()
+        self.visualize_single_variable_prototypes()
 
     def plot_classification_loss(self):
         plt.figure()
