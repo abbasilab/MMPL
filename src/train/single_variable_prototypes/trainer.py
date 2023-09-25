@@ -274,7 +274,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                         else:
                             for k, label in enumerate(classes):
                                 idx = np.where(labels == label)[0]
-                                pattern = class_to_pattern_map[label][variable]
+                                pattern = class_to_pattern_map[label][variable].item()
                                 ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
 
                             idx = np.where(labels == len(classes))[0]
