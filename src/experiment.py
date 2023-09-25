@@ -60,6 +60,48 @@ def intra_cluster_distance(wrapper, dl, dataset):
                     print("variable: " + str(var))
                     print(labels_to_distance)
 
+def inter_cluster_distance(wrapper, dl, dataset):
+    class_to_pattern = get_class_to_pattern_map().to(device)
+    wrapper.eval()
+    with torch.no_grad():
+        for data_matrix, labels in dl:
+            data_matrix, labels = data_matrix.to(device), labels.to(device)
+            if dataset.startswith("simulated"):
+                for var in range(wrapper.num_variables - 1):
+                    patterns = class_to_pattern[labels, var].to(device)
+                    encoder = wrapper.single_variable_prototype_modules[var].encoder   
+                    single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
+                    embeddings = encoder(single_variable_data)
+
+                    unique_patterns = torch.unique(patterns)
+                    centroids = []
+                    for p in unique_patterns:
+                        mask = (patterns == p)
+                        cluster_points = embeddings[mask]
+                        centroid = torch.mean(cluster_points, dim=0)
+                        centroids.append(centroid)
+                    
+                    centroids = torch.stack(centroids)
+                    distance_matrix = torch.cdist(centroids, centroids, p=2)
+                    print(distance_matrix)
+            else:
+                for var in range(wrapper.num_variables):
+                    encoder = wrapper.single_variable_prototype_modules[var].encoder   
+                    single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
+                    embeddings = encoder(single_variable_data)
+
+                    unique_labels = torch.unique(labels)
+                    centroids = []
+                    for l in unique_labels:
+                        mask = (labels == l)
+                        cluster_points = embeddings[mask]
+                        centroid = torch.mean(cluster_points, dim=0)
+                        centroids.append(centroid)
+                    
+                    centroids = torch.stack(centroids)
+                    distance_matrix = torch.cdist(centroids, centroids, p=2)
+                    print(distance_matrix)
+
 def main(args):
     dataset = args.dataset
     config = get_config_from_dataset(dataset)
@@ -72,6 +114,8 @@ def main(args):
 
     if args.type == "intra":
         intra_cluster_distance(wrapper, test_dataloader, dataset)
+    elif args.type == "inter":
+        inter_cluster_distance(wrapper, test_dataloader, dataset)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
