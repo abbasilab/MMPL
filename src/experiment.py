@@ -17,7 +17,7 @@ test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=Fal
 wrapper = load_single_variable_prototypes_wrapper(config).to(device)
 
 def intra_cluster_distance(wrapper):
-    class_to_pattern = get_class_to_pattern_map()
+    class_to_pattern = get_class_to_pattern_map().to(device)
     wrapper.eval()
     with torch.no_grad():
         for data_matrix, labels in test_dataloader:
