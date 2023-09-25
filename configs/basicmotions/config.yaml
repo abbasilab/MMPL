@@ -34,6 +34,7 @@ single_variable_prototypes:
   l2: 0.1
   l3: 1.0
   l4: 1.0
+  d_min: 1.0
   save_dir: models/basicmotions/single_variable_prototypes/
 
 multivariable_prototypes:
