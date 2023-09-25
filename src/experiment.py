@@ -37,8 +37,6 @@ def intra_cluster_distance(wrapper, dl):
                 print("variable: " + str(var))
                 print(pattern_to_distance)
 
-intra_cluster_distance(wrapper)
-
 def main(args):
     dataset = args.dataset
     config = get_config_from_dataset(dataset)
