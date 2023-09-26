@@ -64,7 +64,7 @@ def main(args):
         d_min=multivariable_config['d_min']
     ).to(device)
 
-    # trainer.initialize_prototypes()
+    trainer.initialize_prototypes()
     trainer.train()
 
     trainer.evaluate()
