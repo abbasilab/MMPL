@@ -90,7 +90,7 @@ class ShiftInvariantVariable:
         if pattern_type == 1:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g1, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g2,
-                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0, 0.1, 100)
+                            np.zeros(100 - (shiftone + 45))])# + np.random.normal(0, 0.1, 100)
 
         if pattern_type == 2:
             shiftone = np.random.randint(0, 55)
