@@ -67,6 +67,7 @@ def main(args):
         trainer.plot_diversity_penalties()
         trainer.plot_similarity_penalties()
         trainer.plot_coverage_penalties()
+        trainer.visualize_single_variable_prototypes()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
