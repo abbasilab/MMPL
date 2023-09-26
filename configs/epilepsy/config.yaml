@@ -46,4 +46,5 @@ multivariable_prototypes:
   l2: 100.0
   l3: 1.0
   l4: 1.0
+  d_min: 1.0
   save_dir: models/epilepsy/multivariable_prototypes/

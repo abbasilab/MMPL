@@ -60,7 +60,8 @@ def main(args):
         l1=multivariable_config['l1'],
         l2=multivariable_config['l2'],
         l3=multivariable_config['l3'],
-        l4=multivariable_config['l4']
+        l4=multivariable_config['l4'],
+        d_min=multivariable_config['d_min']
     ).to(device)
 
     # trainer.initialize_prototypes()

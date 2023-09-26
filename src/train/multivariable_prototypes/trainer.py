@@ -12,7 +12,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
     """
     Trains multivariable module.
     """
-    def __init__(self, multivariable_prototypes, train_ds, test_ds, classes, num_variables, num_prototypes, num_layers, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
+    def __init__(self, multivariable_prototypes, train_ds, test_ds, classes, num_variables, num_prototypes, num_layers, batch_size, lr, gamma, epochs, l1, l2, l3, l4, d_min):
         super(MultivariableModuleTrainer, self).__init__()
         self.multivariable_prototypes = multivariable_prototypes
         self.train_ds = train_ds
@@ -29,6 +29,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         self.l2 = l2
         self.l3 = l3
         self.l4 = l4
+        self.d_min = d_min
 
         self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=True)
         self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False, pin_memory=True)
@@ -100,7 +101,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         for j in range(num_prototypes):
             for k in range(j + 1, num_prototypes):
                 distance = torch.norm(prototypes[j] - prototypes[k])
-                term = torch.pow(torch.max(torch.tensor(0.0), 1.0 - distance), 2)
+                term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
                 total_penalty += term
 
         return total_penalty
