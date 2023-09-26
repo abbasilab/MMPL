@@ -2,7 +2,6 @@ import argparse
 
 import torch
 
-from src.experiment import inter_cluster_distance
 from src.data.data import get_ds
 from src.models.encoding import Encoder
 from src.train.encoding.trainer import EncoderTrainer
@@ -39,8 +38,6 @@ def main(args):
 
     if args.save:
         trainer.save(encoding_config['save_dir'])
-
-    inter_cluster_distance(encoders, trainer.test_dataloader, args.dataset)
 
     if args.view:
         trainer.plot_contrastive_losses()

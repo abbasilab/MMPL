@@ -30,7 +30,7 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
     """
     Wrapper class that holds <num_variables> SingleVariablePrototypesModule classes
     """
-    def __init__(self, encoders, num_variables, num_classes, num_prototypes, latent_dim, num_layers, dropout):
+    def __init__(self, encoders, num_variables, num_classes, num_prototypes, latent_dim, num_layers):
         super().__init__()
         self.encoders = encoders
         self.num_variables = num_variables
@@ -38,7 +38,6 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
         self.num_prototypes = num_prototypes
         self.latent_dim = latent_dim
         self.num_layers = num_layers
-        self.dropout_amt = dropout
 
         single_variable_prototype_modules = []
         for i in range(num_variables):
@@ -61,8 +60,6 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
                     layers.append(torch.nn.ReLU())
             self.linear = torch.nn.Sequential(*layers)
 
-        self.dropout = torch.nn.Dropout(self.dropout_amt)
-
     def forward(self, x):
         """
         x: (batch_size, seq_len, num_variables)
@@ -76,5 +73,4 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
             output.append(self.single_variable_prototype_modules[i](single_variable_data))
         output = torch.cat(output, dim=1)
         classification_output = self.linear(output)
-        classification_output = self.dropout(classification_output)
         return output, classification_output
