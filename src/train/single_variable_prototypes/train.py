@@ -6,7 +6,7 @@ from src.data.data import get_ds
 from src.models.encoding import Encoder
 from src.models.single_variable_prototypes import SingleVariablePrototypesWrapper
 from src.train.single_variable_prototypes.trainer import SingleVariablePrototypesTrainer
-from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
+from src.utils.utils import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -15,15 +15,7 @@ def main(args):
     encoding_config = config['encoding']
     single_variable_prototypes_config = config['single_variable_prototypes']
 
-    encoders = []
-    for i in range(config['num_variables']):
-        encoder = Encoder(
-            input_dim=encoding_config['input_dim'],
-            hidden_dim=encoding_config['hidden_dim'],
-            latent_dim=encoding_config['latent_dim']
-        ).to(device)
-        encoder.load_state_dict(torch.load(encoding_config['save_dir'] + "encoder" + str(i+1) + ".pth", map_location=device))
-        encoders.append(encoder)
+    encoders = load_encoders(config)
 
     wrapper = SingleVariablePrototypesWrapper(
         encoders=encoders,

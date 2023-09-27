@@ -7,7 +7,7 @@ from src.models.encoding import Encoder
 from src.models.single_variable_prototypes import SingleVariablePrototypesWrapper
 from src.models.multivariable_prototypes import MultivariableModule
 from src.train.multivariable_prototypes.trainer import MultivariableModuleTrainer
-from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
+from src.utils.utils import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -17,25 +17,9 @@ def main(args):
     single_variable_prototypes_config = config['single_variable_prototypes']
     multivariable_config = config['multivariable_prototypes']
 
-    encoders = []
-    for i in range(config['num_variables']):
-        encoder = Encoder(
-            input_dim=encoding_config['input_dim'],
-            hidden_dim=encoding_config['hidden_dim'],
-            latent_dim=encoding_config['latent_dim']
-        ).to(device)
-        encoder.load_state_dict(torch.load(encoding_config['save_dir'] + "encoder" + str(i+1) + ".pth", map_location=device))
-        encoders.append(encoder)
+    encoders = load_encoders(config)
 
-    wrapper = SingleVariablePrototypesWrapper(
-        encoders=encoders,
-        num_variables=config['num_variables'],
-        num_classes=config['num_classes'],
-        num_prototypes=single_variable_prototypes_config['num_prototypes'],
-        latent_dim=encoding_config['latent_dim'],
-        num_layers=single_variable_prototypes_config['num_layers']
-    ).to(device)
-    wrapper.load_state_dict(torch.load(single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth", map_location=device))
+    wrapper = load_single_variable_prototypes_wrapper(config)
 
     multivariable_module = MultivariableModule(
         wrapper=wrapper,

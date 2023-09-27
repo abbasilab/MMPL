@@ -1,16 +1,21 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from tqdm import tqdm
+import umap
 
 from src.data.data import get_ds
 from src.comparisons.gee.model import AutoencoderPrototypeModel
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 class Trainer(torch.nn.Module):
-    def __init__(self, autoencoder_prototype_model, train_ds, test_ds, batch_size, lr, gamma, epochs, l1, l2, l3, l4):
+    def __init__(self, autoencoder_prototype_model, train_ds, test_ds, classes, batch_size, lr, gamma, epochs, l1, l2, l3, l4, d_min):
         super(Trainer, self).__init__()
         self.model = autoencoder_prototype_model
         self.train_ds = train_ds
         self.test_ds = test_ds
+        self.classes = classes
         self.batch_size = batch_size
         self.lr = lr
         self.gamma = gamma
@@ -19,6 +24,7 @@ class Trainer(torch.nn.Module):
         self.l2 = l2
         self.l3 = l3
         self.l4 = l4
+        self.d_min = d_min
 
         self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
         self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
@@ -35,9 +41,50 @@ class Trainer(torch.nn.Module):
         self.encoded_space_coverage_penalties = []
         self.total_losses = []
 
+    def prototype_diversity_penalty(self):
+        """
+        Penalizes prototypes for being close together.
+        """
+        total_penalty = 0
+        prototypes = self.model.prototype_network.prototypes
+        num_prototypes = prototypes.size(0)
+
+        for j in range(num_prototypes):
+            for k in range(j + 1, num_prototypes):
+                distance = torch.norm(prototypes[j] - prototypes[k])
+                term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
+                total_penalty += term
+
+        return total_penalty
+    
+    def prototype_similarity_penalty(self, embeddings):
+        """
+        Penalizes prototypes for not being similar to a training point.
+        """
+        prototypes = self.model.prototype_network.prototypes
+        embeddings_exp = embeddings.unsqueeze(1)
+        prototypes_exp = self.model.prototype_network.prototypes.unsqueeze(0)
+
+        distances = torch.norm(embeddings_exp - prototypes_exp, dim=2)
+        min_distances = torch.min(distances, dim=0).values
+        return torch.sum(min_distances) / prototypes.size(0)
+    
+    def encoded_space_coverage_penalty(self, embeddings):
+        """
+        Penalizes prototypes for leaving regions of the encoded space uncovered.
+        """
+        embeddings_exp = embeddings.unsqueeze(1)
+        prototypes_exp = self.model.prototype_network.prototypes.unsqueeze(0) 
+
+        pairwise_distances = torch.norm(embeddings_exp - prototypes_exp, dim=2)
+        closest_distances = torch.min(pairwise_distances, dim=1)[0]
+        total_penalty = torch.sum(closest_distances)
+        return total_penalty / len(embeddings_exp)
+
     def train(self):
         for epoch in tqdm(range(self.epochs)):
             for data_matrix, labels in self.train_dataloader:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
                 predictions, reconstructions, embeddings = self.model(data_matrix.float())
                 classification_loss = self.classification_loss_fn(predictions, labels)
                 self.classification_losses.append(classification_loss.item())
@@ -45,8 +92,20 @@ class Trainer(torch.nn.Module):
                 reconstruction_loss = self.reconstruction_loss_fn(reconstructions, data_matrix.float())
                 self.reconstruction_losses.append(reconstruction_loss.item())
 
+                diversity_penalty = self.prototype_diversity_penalty()
+                self.prototype_diversity_penalties.append(diversity_penalty.item())
+
+                similarity_penalty = self.prototype_similarity_penalty(embeddings)
+                self.prototype_similarity_penalties.append(similarity_penalty.item())
+
+                coverage_penalty = self.encoded_space_coverage_penalty(embeddings)
+                self.encoded_space_coverage_penalties.append(coverage_penalty.item())
+
                 total_loss = classification_loss + \
-                             (self.l1)*reconstruction_loss
+                             (self.l1)*reconstruction_loss + \
+                             (self.l2)*diversity_penalty + \
+                             (self.l3)*similarity_penalty + \
+                             (self.l4)*coverage_penalty
                 self.total_losses.append(total_loss.item())
 
                 self.opt.zero_grad()
@@ -71,6 +130,57 @@ class Trainer(torch.nn.Module):
         plt.ylabel("Loss")
         plt.legend()
         plt.show()
+
+    def plot_diversity_penalties(self):
+        plt.figure()
+        plt.plot(self.prototype_diversity_penalties, label="Diversity Penalties")
+        plt.title("Diversity Penalties per Epoch")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.show()
+
+    def plot_similarity_penalties(self):
+        plt.figure()
+        plt.plot(self.prototype_similarity_penalties, label="Similarity Penalties")
+        plt.title("Similarity Penalties per Epoch")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.show()
+
+    def plot_coverage_penalties(self):
+        plt.figure()
+        plt.plot(self.encoded_space_coverage_penalties, label="Coverage Penalties")
+        plt.title("Coverage Penalties per Epoch")
+        plt.xlabel("Epochs")
+        plt.ylabel("Loss")
+        plt.legend()
+        plt.show()
+
+    def visualize_prototypes(self):
+        with torch.no_grad():
+            for data_matrix, labels in self.train_dataloader:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
+                plt.figure()
+                with torch.no_grad():
+                    _, _, embeddings = self.model(data_matrix.float())
+
+                    reducer = umap.UMAP()
+                    embeddings_2d = reducer.fit_transform(embeddings.cpu())
+
+                    string_labels = np.array([self.classes[label.item()] for label in labels])
+
+                    handles, lbls = [], []
+                    for label in self.classes:
+                        idx = np.where(string_labels == label)[0]
+                        scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label)
+                        handles.append(scatter)
+                        lbls.append(label)
+                        
+                    plt.legend(handles, lbls)
+                    plt.title("Latent Space")
+                    plt.show()
 
     def plot_total_loss(self):
         plt.figure()
@@ -101,13 +211,13 @@ class Trainer(torch.nn.Module):
 if __name__ == "__main__":
     model = AutoencoderPrototypeModel(
         input_dim=3,
-        latent_dim=1,
-        autoencoder_num_layers=2,
+        hidden_dim=64,
+        latent_dim=32,
         num_prototypes=4,
         seq_len=206,
         num_classes=4,
-        num_layers=4
-    )
+        num_layers=1
+    ).to(device)
     model.float()
 
     # class_to_index={"standing":0, "running":1, "walking":2,"badminton":3}
@@ -118,19 +228,26 @@ if __name__ == "__main__":
         model,
         train_ds,
         test_ds,
+        # ["Standing", "Running", "Walking", "Badminton"],
+        ["Epilepsy", "Walking", "Running", "Sawing"],
         batch_size=137,
         lr=0.01,
         gamma=0.999,
         epochs=1000,
         l1=1.0,
-        l2=1.0,
+        l2=10.0,
         l3=1.0,
-        l4=1.0
-    )
+        l4=1.0,
+        d_min=1.0
+    ).to(device)
 
     trainer.train()
     trainer.plot_classification_loss()
     trainer.plot_reconstruction_loss()
+    trainer.plot_diversity_penalties()
+    trainer.plot_similarity_penalties()
+    trainer.plot_coverage_penalties()
     trainer.eval()
     trainer.eval(use_test=True)
+    trainer.visualize_prototypes()
 

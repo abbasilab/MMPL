@@ -117,7 +117,7 @@ def visualize_single_variable_prototypes(config, test_ds, save):
                             ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
 
                         idx = np.where(labels == len(classes))[0]
-                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', s=50, c='black')
+                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', s=50, c='magenta')
 
         handles = [plt.Line2D([0], [0], marker='o', color='w', label=pattern_labels[c],
                        markersize=10, markerfacecolor=colors[c]) for c in range(5)]

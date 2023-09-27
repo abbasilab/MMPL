@@ -5,6 +5,8 @@ from src.models.encoding import Encoder
 from src.models.single_variable_prototypes import SingleVariablePrototypesWrapper
 from src.models.multivariable_prototypes import MultivariableModule
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def get_config_from_dataset(dataset):
     config_path = "configs/" + dataset + "/config.yaml"
     with open(config_path, 'r') as f:
@@ -32,7 +34,7 @@ def load_encoders(config):
             hidden_dim=encoding_config['hidden_dim'],
             latent_dim=encoding_config['latent_dim']
         )
-        encoder.load_state_dict(torch.load(encoding_config['save_dir'] + "encoder" + str(i+1) + ".pth"))
+        encoder.load_state_dict(torch.load(encoding_config['save_dir'] + "encoder" + str(i+1) + ".pth", map_location=device))
         encoders.append(encoder)
     return encoders
 
@@ -49,7 +51,7 @@ def load_single_variable_prototypes_wrapper(config):
         num_layers=single_variable_prototypes_config['num_layers']
     )
     save_name = single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth"
-    wrapper.load_state_dict(torch.load(save_name))
+    wrapper.load_state_dict(torch.load(save_name, map_location=device))
     return wrapper
 
 def load_multivariable_prototypes(config):
@@ -64,7 +66,7 @@ def load_multivariable_prototypes(config):
         num_layers=multivariable_config['num_layers']
     )
     save_name = multivariable_config['save_dir'] + "multivariable_prototypes.pth"
-    multivariable_prototypes.load_state_dict(torch.load(save_name))
+    multivariable_prototypes.load_state_dict(torch.load(save_name, map_location=device))
     return multivariable_prototypes
 
 def get_class_to_pattern_map():

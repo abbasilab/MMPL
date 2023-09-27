@@ -1,44 +1,60 @@
 import torch
 
 class Encoder(torch.nn.Module):
-    def __init__(self, input_dim, latent_dim, num_layers):
+    """
+    Single-variable Encoder.
+    """
+    def __init__(self, input_dim, hidden_dim, latent_dim):
         super(Encoder, self).__init__()
-        self.input_dim = input_dim
-        self.latent_dim = latent_dim
-        self.num_layers = num_layers
-
-        self.lstm = torch.nn.LSTM(input_dim, latent_dim, num_layers, batch_first=True)
-
+        self.lstm1 = torch.nn.LSTM(input_dim, hidden_dim, batch_first=True, bidirectional=True)
+        self.lstm2 = torch.nn.LSTM(2 * hidden_dim, latent_dim, batch_first=True)
+        
     def forward(self, x):
-        out = self.lstm(x)
-        return out
+        """
+        x: (batch_size, seq_len, 1)
+        Returns: (batch_size, latent_dim)
+        """
+        x, (hidden, cell) = self.lstm1(x)
+        x, (hidden, cell) = self.lstm2(x)
+        return hidden[-1, :, :]
     
 class Decoder(torch.nn.Module):
-    def __init__(self, latent_dim, output_dim, num_layers):
+    """
+    Single-variable Decoder.
+    """
+    def __init__(self, latent_dim, hidden_dim, output_dim, seq_len):
         super(Decoder, self).__init__()
-        self.latent_dim = latent_dim
-        self.output_dim = output_dim
-        self.num_layers = num_layers
-
-        self.lstm = torch.nn.LSTM(latent_dim, output_dim, num_layers, batch_first=True)
+        self.seq_len = seq_len
+        self.lstm1 = torch.nn.LSTM(latent_dim, hidden_dim, batch_first=True)
+        self.lstm2 = torch.nn.LSTM(hidden_dim, 2 * hidden_dim, batch_first=True)
+        self.linear = torch.nn.Linear(2 * hidden_dim, output_dim)
 
     def forward(self, x):
-        out = self.lstm(x)
-        return out
+        """
+        x: (batch_size, latent_dim)
+        Returns: (batch_size, seq_len, output_dim)
+        """
+        x = x.unsqueeze(1).repeat(1, self.seq_len, 1)
+        x, (hidden, cell) = self.lstm1(x)
+        x, (hidden, cell) = self.lstm2(x)
+        x = self.linear(x)
+        return x
+
     
 class Autoencoder(torch.nn.Module):
-    def __init__(self, input_dim, latent_dim, num_layers):
+    def __init__(self, input_dim, hidden_dim, latent_dim, seq_len):
         super(Autoencoder, self).__init__()
         self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
         self.latent_dim = latent_dim
-        self.num_layers = num_layers
+        self.seq_len = seq_len
 
-        self.encoder = Encoder(input_dim, latent_dim, num_layers)
-        self.decoder = Decoder(latent_dim, input_dim, num_layers)
+        self.encoder = Encoder(input_dim, hidden_dim, latent_dim)
+        self.decoder = Decoder(latent_dim, hidden_dim, input_dim, seq_len)
 
     def forward(self, x):
-        embeddings, _ = self.encoder(x)
-        reconstructions, _ = self.decoder(embeddings)
+        embeddings = self.encoder(x)
+        reconstructions = self.decoder(embeddings)
         return embeddings, reconstructions
     
 class PrototypeNetwork(torch.nn.Module):
@@ -48,26 +64,26 @@ class PrototypeNetwork(torch.nn.Module):
         self.seq_len = seq_len
         self.latent_dim = latent_dim
 
-        self.prototypes = torch.nn.Parameter(torch.zeros(num_prototypes, seq_len, latent_dim))
+        self.prototypes = torch.nn.Parameter(torch.rand(num_prototypes, latent_dim))
 
     def forward(self, x):
-        x_exp = x.unsqueeze(1)
-        prototypes_exp = self.prototypes.unsqueeze(0)
-
-        l2_norm = torch.norm(x_exp - prototypes_exp, p=2, dim=[2, 3])
-        return l2_norm
+        x = torch.unsqueeze(x, 1).repeat_interleave(self.num_prototypes, 1)
+        distances = x - self.prototypes
+        distances = torch.norm(distances, dim=2)
+        sim = torch.pow(1 + distances, -1)
+        return sim
 
 class AutoencoderPrototypeModel(torch.nn.Module):
-    def __init__(self, input_dim, latent_dim, autoencoder_num_layers, num_prototypes, seq_len, num_classes, num_layers):
+    def __init__(self, input_dim, hidden_dim, latent_dim, num_prototypes, seq_len, num_classes, num_layers):
         super(AutoencoderPrototypeModel, self).__init__()
         self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
         self.latent_dim = latent_dim
-        self.autoencoder_num_layers = autoencoder_num_layers
         self.num_prototypes = num_prototypes
         self.seq_len = seq_len
         self.num_classes = num_classes
 
-        self.autoencoder = Autoencoder(input_dim, latent_dim, autoencoder_num_layers)
+        self.autoencoder = Autoencoder(input_dim, hidden_dim, latent_dim, seq_len)
         self.prototype_network = PrototypeNetwork(num_prototypes, seq_len, latent_dim)
 
         if num_layers == 1:
