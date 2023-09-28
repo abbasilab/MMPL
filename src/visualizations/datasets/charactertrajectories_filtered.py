@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 import seaborn as sns
+from sktime.datasets import load_from_tsfile_to_dataframe
 import torch
 import umap
 
@@ -20,6 +21,8 @@ def charactertrajectories_filtered_visualize(dataset, type, save):
         visualize_multivariable_prototypes(config, save)
     elif type == "project":
         visualize_projected_prototypes(config, train_ds, save)
+    elif type == "chars":
+        visualize_characters(config, train_ds, save)
     
 
 def visualize_latent_space(config, test_ds, save):
@@ -158,11 +161,58 @@ def visualize_projected_prototypes(config, train_ds, save):
                     closest_index = torch.argmin(distances).item()
                     closest_point = single_variable_data[closest_index].squeeze(1)
                     ax = axs[i, j]
-                    ax.plot(closest_point, c=colors[i])
+                    ax.plot(closest_point, c=colors[int(labels[closest_index])])
                     if j == 0:
-                        ax.set_ylabel(classes[i])
+                        ax.set_ylabel(classes[int(labels[closest_index])])
     fig.align_ylabels()
     plt.show()
+
+def visualize_characters(config, train_ds, save):
+    multivariable_module = load_multivariable_prototypes(config)
+    multivariable_module.eval()
+    train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False, pin_memory=True)
+    colors = ['red', 'blue', 'green', 'orange']
+    classes = ['b', 'd', 'p', "q"]
+    fig, axs = plt.subplots(1, 4, figsize=(8, 2))
+    with torch.no_grad():
+        prototype_matrix = multivariable_module.prototypes
+        wrapper = multivariable_module.wrapper
+        for data_matrix, labels in train_loader:
+            for i in range(multivariable_module.num_classes):
+                prototype = prototype_matrix[i]
+                chunks = prototype.split(wrapper.num_prototypes)
+
+                x_chunk = chunks[0]
+                x_index = torch.argmax(x_chunk)
+                x_prototype = wrapper.single_variable_prototype_modules[0].prototypes[x_index]
+                x_data = data_matrix[:, :, 0].unsqueeze(2).float()
+                x_embeddings = wrapper.single_variable_prototype_modules[0].encoder(x_data)
+                x_distances = torch.norm(x_embeddings - x_prototype, dim=1)
+                x_closest_index = torch.argmin(x_distances).item()
+                x_closest_point = x_data[x_closest_index].squeeze(1)
+
+                y_chunk = chunks[1]
+                y_index = torch.argmax(y_chunk)
+                y_prototype = wrapper.single_variable_prototype_modules[1].prototypes[y_index]
+                y_data = data_matrix[:, :, 1].unsqueeze(2).float()
+                y_embeddings = wrapper.single_variable_prototype_modules[1].encoder(y_data)
+                y_distances = torch.norm(y_embeddings - y_prototype, dim=1)
+                y_closest_index = torch.argmin(y_distances).item()
+                y_closest_point = y_data[y_closest_index].squeeze(1)
+
+
+                x_int, y_int = torch.cumsum(x_closest_point, dim=0), torch.cumsum(y_closest_point, dim=0)
+                label = int(labels[x_closest_index])
+                ax = axs[label]
+                ax.plot(x_int, y_int, c=colors[label])
+                ax.get_xaxis().set_visible(False)
+                ax.get_yaxis().set_visible(False)
+                ax.set_title(classes[label])
+    plt.show()
+
+
+
+                
 
 
                 
