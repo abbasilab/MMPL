@@ -44,8 +44,8 @@ multivariable_prototypes:
   gamma: 0.999
   epochs: 1000
   l1: 1.0
-  l2: 100.0
+  l2: 1.0
   l3: 1.0
   l4: 1.0
-  d_min: 1.0
+  d_min: 5.0
   save_dir: models/charactertrajectories_filtered/multivariable_prototypes/
