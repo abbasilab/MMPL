@@ -8,6 +8,8 @@ import umap
 
 from src.data.data import get_ds
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 def similarity_penalty1(dataset,prototype_matrix):
     dataset = dataset.unsqueeze(1).repeat_interleave(prototype_matrix.shape[0],1)
     distances = dataset-prototype_matrix
@@ -37,8 +39,8 @@ class SiameseContrastiveLoss(torch.nn.Module):
         super().__init__()
     def forward(self,data, labels):
         batch_size = data.shape[0]
-        rangeset = torch.arange(batch_size)
-        all_combos = torch.combinations(rangeset)
+        rangeset = torch.arange(batch_size).to(device)
+        all_combos = torch.combinations(rangeset).to(device)
         same_labels = all_combos[(labels[all_combos[:, 0]] == labels[all_combos[:, 1]]).nonzero()].squeeze()
         opposite_labels = all_combos[(labels[all_combos[:, 0]] != labels[all_combos[:, 1]]).nonzero()].squeeze()
         same_distances = torch.norm(data[same_labels][:, 0] - data[same_labels][:, 1], dim=1)
@@ -107,9 +109,10 @@ class PretrainModuleReal(torch.nn.Module):
             data_subset  = data[:,:,var]
             result_list.append(self.module_list[var](data_subset.unsqueeze(2)))
         return result_list
-class PretrainTrainingLoopReal:
+class PretrainTrainingLoopReal(torch.nn.Module):
     """Encodes the pretraining"""
     def __init__(self, list_of_sensor_modules):
+        super().__init__()
         self.pretrain = PretrainModuleReal(list_of_sensor_modules).float()
         self.num_variables = len(list_of_sensor_modules)
         self.optim = torch.optim.Adam(self.pretrain.parameters(), lr=0.01) #0.01
@@ -120,6 +123,7 @@ class PretrainTrainingLoopReal:
         for k in range(num_epochs):
             losses = list()
             for data_matrix, labels in data_load:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
                 self.pretrain.zero_grad()
                 output = self.pretrain(data_matrix.float())
                 total_loss = 0
@@ -130,8 +134,9 @@ class PretrainTrainingLoopReal:
                 self.optim.step()
             self.lr_sched.step()
             print("Epoch "+str(k)+" "+str(float(sum(losses))/float(len(losses))))
-class PretrainAndSaveLoop:
+class PretrainAndSaveLoop(torch.nn.Module):
     def __init__(self,main_train_loop):
+        super().__init__()
         self.main_loop = main_train_loop
         self.pretrain_mod = PretrainTrainingLoopReal(
             torch.nn.ModuleList([k.encoder for k in main_train_loop.framework.signal_prototypes]))
@@ -146,7 +151,7 @@ class PretrainAndSaveLoop:
             with torch.no_grad():
               visualize_moment = torch.utils.data.DataLoader(train_data, len(train_data))
               for train_sample  in visualize_moment:
-                  inp, out = train_sample[0].detach(), train_sample[1].detach()
+                  inp, out = train_sample[0].detach().to(device), train_sample[1].detach().to(device)
                   num_vars = inp.shape[-1]
                   for var in range(num_vars):
                       embeddings = self.pretrain_mod.pretrain.module_list[var](inp[:,:,var].unsqueeze(2).float().detach())
@@ -204,8 +209,9 @@ class MultivariablePrototypeLearningFrameworkReal(torch.nn.Module):
         aggregated_features = torch.relu(aggregated_features)
         aggregated_features = self.aggregate_prototype_layer2(aggregated_features)
         return aggregated_features,concat_features
-class MultivariablePrototypeLearningTrainLoopReal:
+class MultivariablePrototypeLearningTrainLoopReal(torch.nn.Module):
     def __init__(self,num_variables,hidden,numproto,numclasses,weights):
+        super().__init__()
         self.num_variables = num_variables
         self.numclasses = numclasses
         self.hidden = hidden
@@ -221,7 +227,7 @@ class MultivariablePrototypeLearningTrainLoopReal:
         data_train = torch.utils.data.DataLoader(data_load, len(data_load), True)
         whole_data_get = torch.utils.data.DataLoader(data_load,len(data_load),False)
         whole_data_iter = iter(whole_data_get)
-        whole_data_tensor = next(whole_data_iter)[0]
+        whole_data_tensor = next(whole_data_iter)[0].to(device)
         print("DATA TRAIN",len(data_train))
         data_eval = torch.utils.data.DataLoader(data_eval, 8, True)
         print("DATA EVAL", len(data_eval))
@@ -229,7 +235,7 @@ class MultivariablePrototypeLearningTrainLoopReal:
             for epoch in range(epochs):
                 total_losses = list()
                 for train,label in data_train:
-
+                    train, label = train.to(device), label.to(device)
                     self.framework.zero_grad()
                     pred,second_degree = self.framework(train.float())
                     classification_loss = self.classification_loss(pred,label)
@@ -239,7 +245,7 @@ class MultivariablePrototypeLearningTrainLoopReal:
 
                     similarity_penalty_3_term = 0
                     for jt in range(self.num_variables):
-                        similarity_penalty_3_term += (10.)*similarity_penalty2(whole_data_tensor[:,:,jt].unsqueeze(2).float(),self.framework.signal_prototypes[jt])
+                        similarity_penalty_3_term += (100.)*similarity_penalty2(whole_data_tensor[:,:,jt].unsqueeze(2).float(),self.framework.signal_prototypes[jt])
                     similarity_penalty_1_term = 0
                     for jt in range(self.num_variables):
                         similarity_penalty_1_term += (1.)*similarity_penalty(whole_data_tensor[:,:,jt].unsqueeze(2).float(),self.framework.signal_prototypes[jt])
@@ -257,6 +263,7 @@ class MultivariablePrototypeLearningTrainLoopReal:
                         denominator = 0
                         numerator = 0
                         for train, label in data_eval:
+                            train, label = train.to(device), label.to(device)
                             pred,reject = self.framework(train.float())
                             sof = torch.softmax(pred, 1)
                             predicted = torch.argmax(sof, 1)
@@ -266,8 +273,9 @@ class MultivariablePrototypeLearningTrainLoopReal:
         finally:
             print("Done")
 
-class ProjectDataset:
+class ProjectDataset(torch.nn.Module):
     def __init__(self,dataset,encoder):
+        super().__init__()
         self.dataset = dataset
         self.encoder = encoder
     def project(self,prototype_vector):
@@ -291,8 +299,9 @@ class AggregatePrototypeLayer(torch.nn.Module):
         distances=torch.norm(encoded-self.protos,dim=2)
         result = self.fc(distances)
         return result
-class MultivariablePrototypeLearningTrainLoopSecond:
+class MultivariablePrototypeLearningTrainLoopSecond(torch.nn.Module):
     def __init__(self,sensor_module,num_variables,hidden,numproto,numclasses):
+        super().__init__()
         self.num_variables = num_variables
         self.numclasses = numclasses
         self.hidden = hidden
@@ -308,6 +317,7 @@ class MultivariablePrototypeLearningTrainLoopSecond:
             for epoch in range(epochs):
                 total_losses = list()
                 for train,label in data_train:
+                    train, label = train.to(device), label.to(device)
                     self.framework.zero_grad()
                     pred,second_degree = self.framework(train.float())
 
@@ -323,11 +333,12 @@ class MultivariablePrototypeLearningTrainLoopSecond:
                     self.optim.step()
                     self.lr_sched.step()
                 print(float(sum(total_losses))/float(len(total_losses)))
-                if (epoch%50)==0:
+                if (epoch%6000)==0:
                     with torch.no_grad():
                         denominator = 0
                         numerator = 0
                         for train, label in data_eval:
+                            train, label = train.to(device), label.to(device)
                             pred,reject = self.framework(train.float())
                             sof = torch.softmax(pred, 1)
                             predicted = torch.argmax(sof, 1)
@@ -352,7 +363,7 @@ class MultivariablePrototypeLearningTrainLoopSecond:
                         #ax.vlines([5,10,15,20,25,30,35,40,45,50],*ax.get_ylim())
                         #plt.show()
                         identified_signatures = set(identified_signatures_tup)
-                        normalized = normalized.detach().numpy()
+                        normalized = normalized.to("cpu").detach().numpy()
                         normalized = np.array([normalized[bpt] for bpt in ind])
                         plt.figure(figsize=(5,5))
                         ax=seaborn.heatmap(normalized,xticklabels=["Var1_Proto1", "Var1_Proto2","Var1_Proto3","Var1_Proto4","Var2_Proto1", "Var2_Proto2","Var2_Proto3","Var2_Proto4","Var3_Proto1", "Var3_Proto2","Var3_Proto3","Var3_Proto4","Var4_Proto1", "Var4_Proto2","Var4_Proto3","Var4_Proto4"],yticklabels= [str(identified_signatures_tup[i]) for i in ind])
