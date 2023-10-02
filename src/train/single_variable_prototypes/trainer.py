@@ -34,6 +34,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         self.d_min = d_min
 
         self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True)
+        self.full_train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=len(train_ds), shuffle=False)
         self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False)
 
         # Disable gradients for the encoders
@@ -59,18 +60,18 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         with torch.no_grad():
             # Iterate through the variables
             count = 0
-            for data_matrix, _ in self.train_dataloader:
-                if count == 1:
-                    break
-                count += 1
+            for data_matrix, _ in self.full_train_dataloader:
                 data_matrix = data_matrix.to(device)
                 for i in range(self.num_variables):
                     single_variable_data = data_matrix[:, :, i].unsqueeze(2).float()
                     encoder = self.wrapper.single_variable_prototype_modules[i].encoder
                     prototypes = self.wrapper.single_variable_prototype_modules[i].prototypes
                     encodings = encoder(single_variable_data)
+                    chosen_indices = []
                     # Step 1: Set a random element to be the first prototype
-                    prototypes[0] = random.choice(encodings)
+                    index = random.randint(0, len(encodings) - 1)
+                    prototypes[0] = encodings[index]
+                    chosen_indices.append(index)
                     for j in range(1, self.num_prototypes):
                         # Step 2: For each data point calculate distance to each chosen prototype
                         # Keep distance to closest chosen prototype
@@ -90,7 +91,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                         while not found:
                             index = np.random.choice([ind for ind in range(len(encodings))], p=probabilities)
                             candidate = encodings[index]
-                            if candidate not in prototypes:
+                            if index not in chosen_indices:
                                 found = True
                         prototypes[j] = candidate
 
