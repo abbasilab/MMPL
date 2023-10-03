@@ -198,24 +198,27 @@ class Trainer(torch.nn.Module):
         with torch.no_grad():
             numerator = 0
             denominator = 0
-            for data_matrix, label in dl:
+            for data_matrix, labels in dl:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
                 output, _, _ = self.model(data_matrix.float())
                 sof = torch.softmax(output, 1)
                 prediction = torch.argmax(sof, 1)
 
-                numerator += torch.sum(prediction.eq(label).int())
+                numerator += torch.sum(prediction.eq(labels).int())
                 denominator += data_matrix.shape[0]
             accuracy = float(numerator) / float(denominator)
             print("Accuracy: " + str(accuracy))
 
 if __name__ == "__main__":
     model = AutoencoderPrototypeModel(
-        input_dim=3,
+        input_dim=4,
         hidden_dim=64,
         latent_dim=32,
-        num_prototypes=4,
-        seq_len=206,
-        num_classes=4,
+        num_prototypes=64,
+        seq_len=100,
+        # seq_len=206,
+        # seq_len=119,
+        num_classes=64,
         num_layers=1
     ).to(device)
     model.float()
@@ -224,18 +227,30 @@ if __name__ == "__main__":
     # train_ds, test_ds = get_ds("data/basicmotions/processed/train.ts", class_to_index), get_ds("data/basicmotions/processed/test.ts", class_to_index)
     class_to_index={"epilepsy":0, "walking":1, "running":2,"sawing":3}
     train_ds, test_ds = get_ds("data/epilepsy/processed/train.ts", class_to_index), get_ds("data/epilepsy/processed/test.ts", class_to_index)
+    # class_to_index={"b":0, "d":1, "p":2,"q":3}
+    # train_ds, test_ds = get_ds("data/charactertrajectories_filtered/processed/train.ts", class_to_index), get_ds("data/charactertrajectories_filtered/processed/test.ts", class_to_index)
+    class_to_index={}
+    for i in range(64):
+        class_to_index[str(i)] = i
+    train_ds, test_ds = get_ds("data/simulated_6400/processed/train.ts", class_to_index), get_ds("data/simulated_6400/processed/val.ts", class_to_index)
+    
     trainer = Trainer(
         model,
         train_ds,
         test_ds,
         # ["Standing", "Running", "Walking", "Badminton"],
-        ["Epilepsy", "Walking", "Running", "Sawing"],
-        batch_size=137,
+        # batch_size=40,
+        # ["Epilepsy", "Walking", "Running", "Sawing"],
+        # batch_size=137,
+        # ["b", "d", "p", "q"],
+        # batch_size=127,
+        [str(i) for i in range(64)],
+        batch_size=640,
         lr=0.01,
         gamma=0.999,
-        epochs=1000,
-        l1=1.0,
-        l2=10.0,
+        epochs=500,
+        l1=0.0,
+        l2=1.0,
         l3=1.0,
         l4=1.0,
         d_min=1.0
