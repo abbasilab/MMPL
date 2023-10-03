@@ -132,22 +132,23 @@ def visualize_single_variable_prototypes(config, test_ds, save):
 
     plt.show()
 
+def sorting_key(prototype):
+    indices = []
+    for i in range(3):
+        single_variable_prototype = prototype[i*4:(i+1)*4]
+        high_value_index = torch.argmax(single_variable_prototype).item()
+        indices.append(high_value_index)
+    return tuple(indices)
 
 def visualize_multivariable_prototypes(config, save):
     plt.figure()
 
     multivariable_module = load_multivariable_prototypes(config)
-    sorted_prototypes = torch.zeros_like(multivariable_module.prototypes)
-    for var in range(multivariable_module.num_variables - 1):
-        start_idx = var*multivariable_module.num_sv_prototypes
-        end_idx = (var+1)*multivariable_module.num_sv_prototypes
-        blocks = multivariable_module.prototypes[:, start_idx:end_idx]
-        max_indices = blocks.argmax(dim=1)
-        sorted_indices = max_indices.argsort()
-        sorted_blocks = blocks[sorted_indices]
-        sorted_prototypes[:, start_idx:end_idx] = sorted_blocks
-
-    sns.heatmap(sorted_prototypes.cpu().detach().numpy())
+    prototypes = multivariable_module.prototypes[:, :-4]
+    prototypes_list = [prototypes[i, :] for i in range(prototypes.shape[0])]
+    sorted_prototypes = sorted(prototypes_list, key=sorting_key)
+    sorted_prototypes_tensor = torch.stack(sorted_prototypes)
+    sns.heatmap(sorted_prototypes_tensor.cpu().detach().numpy())
 
     if save:
         save_name = "visualizations/simulated_6400/multivariable_prototypes.pdf"

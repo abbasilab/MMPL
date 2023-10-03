@@ -32,6 +32,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         self.d_min = d_min
 
         self.train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=batch_size, shuffle=True, pin_memory=True)
+        self.full_train_dataloader = torch.utils.data.DataLoader(train_ds, batch_size=len(train_ds), shuffle=False, pin_memory=True)
         self.test_dataloader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False, pin_memory=True)
 
         # Disable gradients for single variable portions
@@ -55,40 +56,40 @@ class MultivariableModuleTrainer(torch.nn.Module):
         """
         with torch.no_grad():
             # Iterate through the variables
-            count = 0
-            for data_matrix, _ in self.train_dataloader:
-                if count == 1:
-                    break
-                count += 1
+            for data_matrix, _ in self.full_train_dataloader:
                 data_matrix = data_matrix.to(device)
-                for i in range(self.num_variables):
-                    wrapper = self.multivariable_prototypes.wrapper
-                    prototypes = self.multivariable_prototypes.prototypes
-                    sims, _ = wrapper(data_matrix)
-                    # Step 1: Set a random element to be the first prototype
-                    prototypes[0] = random.choice(sims)
-                    for j in range(1, self.num_prototypes):
-                        # Step 2: For each data point calculate distance to each chosen prototype
-                        # Keep distance to closest chosen prototype
-                        distances = []
-                        for point in sims:
-                            min_distance = float("inf")
-                            for k in range(j):
-                                prototype = prototypes[k]
-                                min_distance = min(min_distance, torch.linalg.vector_norm(point - prototype))
-                            distances.append(float(min_distance))
-                        probabilities = np.array(distances)
-                        probabilities = np.square(probabilities)
-                        probabilities = probabilities / probabilities.sum()
+                wrapper = self.multivariable_prototypes.wrapper
+                prototypes = self.multivariable_prototypes.prototypes
+                sims, _ = wrapper(data_matrix)
+                chosen_indices = []
+                # Step 1: Set a random element to be the first prototype
+                index = random.randint(0, len(sims) - 1)
+                prototypes[0] = sims[index]
+                chosen_indices.append(index)
+                for j in range(1, self.num_prototypes):
+                    print(j)
+                    # Step 2: For each data point calculate distance to each chosen prototype
+                    # Keep distance to closest chosen prototype
+                    distances = []
+                    for point in sims:
+                        min_distance = float("inf")
+                        for k in range(j):
+                            prototype = prototypes[k]
+                            min_distance = min(min_distance, torch.linalg.vector_norm(point - prototype))
+                        distances.append(float(min_distance))
+                    probabilities = np.array(distances)
+                    probabilities = np.square(probabilities)
+                    probabilities = probabilities / probabilities.sum()
 
-                        # Step 3: Choose an element at random to be the next prototype with prob proportional to distance
-                        found = False
-                        while not found:
-                            index = np.random.choice([ind for ind in range(len(sims))], p=probabilities)
-                            candidate = sims[index]
-                            if candidate not in prototypes:
-                                found = True
-                        prototypes[j] = candidate
+                    # Step 3: Choose an element at random to be the next prototype with prob proportional to distance
+                    found = False
+                    while not found:
+                        index = np.random.choice([ind for ind in range(len(sims))], p=probabilities)
+                        candidate = sims[index]
+                        if index not in chosen_indices:
+                            found = True
+                            chosen_indices.append(index)
+                    prototypes[j] = candidate
     
     def prototype_diversity_penalty(self):
         """

@@ -93,6 +93,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                             candidate = encodings[index]
                             if index not in chosen_indices:
                                 found = True
+                                chosen_indices.append(index)
                         prototypes[j] = candidate
 
     def compute_pairwise_distances(self):
