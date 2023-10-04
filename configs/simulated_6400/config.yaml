@@ -160,13 +160,13 @@ single_variable_prototypes:
 
 multivariable_prototypes:
   num_layers: 1
-  batch_size: 1280
-  lr: 0.01
+  batch_size: 640
+  lr: 0.1
   gamma: 0.999
-  epochs: 0
+  epochs: 200
   l1: 1.0
-  l2: 0.0
-  l3: 0.0
-  l4: 0.0
-  d_min: 1.0
+  l2: 10.0
+  l3: 10.0
+  l4: 1.0
+  d_min: 0.3
   save_dir: models/simulated_6400/multivariable_prototypes/

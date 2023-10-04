@@ -16,6 +16,8 @@ def simulated_6400_visualize(dataset, type, save):
         visualize_latent_space(config, test_ds, save)
     elif type == "single-var":
         visualize_single_variable_prototypes(config, test_ds, save)
+    elif type == "sims":
+        visualize_random_sims(config, test_ds)
     elif type == "multi-var":
         visualize_multivariable_prototypes(config, save)
     elif type == "project":
@@ -131,6 +133,34 @@ def visualize_single_variable_prototypes(config, test_ds, save):
         plt.savefig(save_name, dpi=300)
 
     plt.show()
+
+def visualize_random_sims(config, test_ds):
+    wrapper = load_single_variable_prototypes_wrapper(config).to(device)
+    wrapper.eval()
+    test_loader = torch.utils.data.DataLoader(test_ds, len(test_ds), shuffle=False, pin_memory=True)
+    with torch.no_grad():
+        for data_matrix, labels in test_loader:
+            data_matrix, labels = data_matrix.to(device).float(), labels.to(device).float()
+            selected_data = torch.empty((64, 100, 4)).to(device)
+            selected_labels = torch.empty((64,)).to(device)
+            for i in range(64):
+                start_idx = i*100
+                end_idx = (i+1)*100
+                rand_idx = torch.randint(start_idx, end_idx, (1,))
+                selected_data[i] = data_matrix[rand_idx]
+                selected_labels[i] = labels[rand_idx]
+            sims, _ = wrapper(selected_data)
+            sims = sims[:, :-4]
+            x1 = sims.unsqueeze(0)
+            x2 = sims.unsqueeze(1)
+            distances = torch.linalg.norm(x1-x2, dim=2)
+            print(distances)
+            print(torch.topk(distances, k=2, dim=0, largest=False).values)
+            print(torch.max(distances, dim=0).values)
+            plt.figure()
+            sns.heatmap(sims.to("cpu").detach().numpy())
+            plt.show()
+
 
 def sorting_key(prototype):
     indices = []

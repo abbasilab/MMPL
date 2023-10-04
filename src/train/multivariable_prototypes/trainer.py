@@ -56,7 +56,7 @@ class MultivariableModuleTrainer(torch.nn.Module):
         """
         with torch.no_grad():
             # Iterate through the variables
-            for data_matrix, _ in self.full_train_dataloader:
+            for data_matrix, labels in self.full_train_dataloader:
                 data_matrix = data_matrix.to(device)
                 wrapper = self.multivariable_prototypes.wrapper
                 prototypes = self.multivariable_prototypes.prototypes
@@ -162,6 +162,9 @@ class MultivariableModuleTrainer(torch.nn.Module):
                         param.clamp_(min=0)
             self.sched.step()
 
+            # if epoch % 10 == 0:
+            #     self.plot_prototypes_heatmap()
+
     def plot_classification_loss(self):
         plt.figure()
         plt.plot(self.classification_losses, label="Classification Loss")
@@ -207,10 +210,23 @@ class MultivariableModuleTrainer(torch.nn.Module):
         plt.legend()
         plt.show()
 
+    def sorting_key(self, prototype):
+        indices = []
+        for i in range(3):
+            single_variable_prototype = prototype[i*4:(i+1)*4]
+            high_value_index = torch.argmax(single_variable_prototype).item()
+            indices.append(high_value_index)
+        return tuple(indices)
     def plot_prototypes_heatmap(self):
-        plt.figure()
-        sns.heatmap(self.multivariable_prototypes.cpu().prototypes.detach().numpy())
-        plt.show()
+        with torch.no_grad():
+            prototypes = self.multivariable_prototypes.prototypes[:, :-4]
+            prototypes_list = [prototypes[i, :] for i in range(prototypes.shape[0])]
+            sorted_prototypes = sorted(prototypes_list, key=self.sorting_key)
+            sorted_prototypes_tensor = torch.stack(sorted_prototypes)
+
+            plt.figure()
+            sns.heatmap(sorted_prototypes_tensor.cpu().detach().numpy())
+            plt.show()
 
     def evaluate(self, use_test=False):
         dl = self.train_dataloader
