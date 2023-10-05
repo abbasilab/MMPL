@@ -92,10 +92,12 @@ def visualize_single_variable_prototypes(config, test_ds, save):
                 labels = torch.concat([labels, len(classes)*torch.ones((wrapper.single_variable_prototype_modules[j].prototypes.shape[0],))], dim=0)
                 reducer = umap.UMAP()
                 embeddings_2d = reducer.fit_transform(embeddings.cpu())
+                e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
+                embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
 
                 for k, label in enumerate(classes):
                     idx = np.where(labels == label)[0]
-                    ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label, c=colors[k], alpha=0.2)
+                    ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label, c=colors[k], s=50, alpha=0.5)
 
                 idx = np.where(labels == len(classes))[0]
                 ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=len(classes), marker="*", edgecolor='black', s=75, c=colors[-1])

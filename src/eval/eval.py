@@ -9,10 +9,10 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main(args):
     config = get_config_from_dataset(args.dataset)
-    multivariable_module = load_multivariable_prototypes(config)
+    multivariable_module = load_multivariable_prototypes(config).to(device)
     multivariable_module.eval()
 
-    ds = get_ds(get_test_path_from_dataset(args.dataset), config['class_to_index'])
+    ds = get_ds(get_test_path_from_dataset(args.dataset, train=False), config['class_to_index'])
     dl = torch.utils.data.DataLoader(ds, len(ds), False, pin_memory=True)
     with torch.no_grad():
         numerator = 0

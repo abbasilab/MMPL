@@ -11,7 +11,7 @@ from src.utils.utils import *
 def simulated_6400_visualize(dataset, type, save):
     config = get_config_from_dataset(dataset)
     train_ds = get_ds(get_train_path_from_dataset(dataset), config['class_to_index'])
-    test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'])
+    test_ds = get_ds(get_test_path_from_dataset(dataset, train=False), config['class_to_index'])
     if type == "latent-space":
         visualize_latent_space(config, test_ds, save)
     elif type == "single-var":
@@ -86,7 +86,7 @@ def visualize_single_variable_prototypes(config, test_ds, save):
     class_to_pattern_map = get_class_to_pattern_map()
     with torch.no_grad():
         classes = [i for i in range(64)]
-        colors = ['red', 'blue', 'green', 'orange', 'black']
+        colors = ['red', 'blue', 'green', 'orange', 'magenta']
         variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
         pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
 
