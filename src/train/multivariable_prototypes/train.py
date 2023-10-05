@@ -48,7 +48,8 @@ def main(args):
         d_min=multivariable_config['d_min']
     ).to(device)
 
-    # trainer.initialize_prototypes()
+    if args.initialize:
+        trainer.initialize_prototypes()
     trainer.train()
 
     trainer.evaluate()
@@ -68,6 +69,6 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
     parser.add_argument("--view", action=argparse.BooleanOptionalAction, default=False, help="Whether to view loss curves/latent spaces")
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the model or not")
-
+    parser.add_argument("--initialize", action=argparse.BooleanOptionalAction, default=False, help="Whether to use k-means++ initialization for prototypes")
     args = parser.parse_args()
     main(args)
