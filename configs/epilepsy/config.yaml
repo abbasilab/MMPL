@@ -13,12 +13,12 @@ num_variables: 3
 
 encoding:
   input_dim: 1
-  hidden_dim: 64
-  latent_dim: 32
+  hidden_dim: 32
+  latent_dim: 16
   batch_size: 137
   lr: 0.01
   gamma: 0.999
-  epochs: 2000
+  epochs: 3000
   m: 1.0
   save_dir: models/epilepsy/encoding/
 

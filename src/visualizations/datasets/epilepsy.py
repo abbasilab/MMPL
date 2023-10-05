@@ -42,6 +42,8 @@ def visualize_latent_space(config, test_ds, save):
                 embeddings = encoder(single_variable_data)
                 reducer = umap.UMAP()
                 embeddings_2d = reducer.fit_transform(embeddings.cpu())
+                e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
+                embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
 
                 for k, label in enumerate(classes):
                     idx = np.where(labels == label)[0]
