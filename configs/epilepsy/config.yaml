@@ -28,7 +28,7 @@ single_variable_prototypes:
   batch_size: 137
   lr: 0.01
   gamma: 0.999
-  epochs: 400
+  epochs: 1000
   l1: 1.0
   l2: 1.0
   l3: 1.0
@@ -41,7 +41,7 @@ multivariable_prototypes:
   batch_size: 137
   lr: 0.01
   gamma: 0.999
-  epochs: 750
+  epochs: 1000
   l1: 1.0
   l2: 100.0
   l3: 1.0
