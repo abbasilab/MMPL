@@ -163,7 +163,7 @@ multivariable_prototypes:
   batch_size: 640
   lr: 0.1
   gamma: 0.999
-  epochs: 200
+  epochs: 500
   l1: 1.0
   l2: 10.0
   l3: 10.0

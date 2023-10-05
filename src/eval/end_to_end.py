@@ -33,7 +33,7 @@ def main(args):
         trainer = EncoderTrainer(
             encoders=encoders,
             train_ds=get_ds(get_train_path_from_dataset(args.dataset), config['class_to_index']),
-            test_ds=get_ds(get_test_path_from_dataset(args.dataset), config['class_to_index']),
+            test_ds=get_ds(get_test_path_from_dataset(args.dataset, train=False), config['class_to_index']),
             classes=config['classes'],
             num_variables=config['num_variables'],
             batch_size=encoding_config['batch_size'],
@@ -58,7 +58,7 @@ def main(args):
         trainer = SingleVariablePrototypesTrainer(
             wrapper=wrapper,
             train_ds=get_ds(get_train_path_from_dataset(args.dataset), config['class_to_index']),
-            test_ds=get_ds(get_test_path_from_dataset(args.dataset), config['class_to_index']),
+            test_ds=get_ds(get_test_path_from_dataset(args.dataset, train=False), config['class_to_index']),
             classes=config['classes'],
             num_variables=config['num_variables'],
             num_prototypes=single_variable_prototypes_config['num_prototypes'],
@@ -88,7 +88,7 @@ def main(args):
         trainer = MultivariableModuleTrainer(
             multivariable_prototypes=multivariable_module,
             train_ds=get_ds(get_train_path_from_dataset(args.dataset), config['class_to_index']),
-            test_ds=get_ds(get_test_path_from_dataset(args.dataset), config['class_to_index']),
+            test_ds=get_ds(get_test_path_from_dataset(args.dataset, train=False), config['class_to_index']),
             classes=config['classes'],
             num_variables=config['num_variables'],
             num_prototypes=config['num_classes'],
