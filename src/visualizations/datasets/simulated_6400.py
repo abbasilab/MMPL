@@ -21,7 +21,7 @@ def simulated_6400_visualize(dataset, type, save):
     elif type == "multi-var":
         visualize_multivariable_prototypes(config, save)
     elif type == "project":
-        visualize_projected_prototypes(config, test_ds, save)
+        visualize_projected_prototypes(config, train_ds, save)
     
 
 def visualize_latent_space(config, test_ds, save):
@@ -198,34 +198,94 @@ def visualize_multivariable_prototypes(config, save):
         plt.savefig(save_name, dpi=300)
     plt.show()
 
-def visualize_projected_prototypes(config, train_ds, save):
-    multivariable_module = load_multivariable_prototypes(config)
+def generate_prototype_to_class_mapping(multivariable_module, train_ds, indices_to_use):
     multivariable_module.eval()
-    train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False, pin_memory=True)
-    fig, axs = plt.subplots(4, 3, figsize=(6.75, 9))
-    colors = ['red', 'green', 'blue', 'orange']
-    classes = ['Epilepsy', 'Running', 'Walking', "Sawing"]
+    prototype_matrix = multivariable_module.prototypes
+    train_loader = torch.utils.data.DataLoader(train_ds, batch_size=len(indices_to_use), shuffle=False, sampler=torch.utils.data.SubsetRandomSampler(indices_to_use))
+    prototype_to_class_mapping = {}
+    classes_of_interest = [0, 21, 42, 63]  # The classes you're interested in
+    
     with torch.no_grad():
-        prototype_matrix = multivariable_module.prototypes
+        for data_matrix, labels in train_loader:
+            data_matrix, labels = data_matrix.to(device).float(), labels.to(device).float()
+            _, sv_sims = multivariable_module(data_matrix)
+            
+            for class_id in classes_of_interest:
+                # Extract sv_sims corresponding to the current class_id
+                sv_sims_class = sv_sims[labels == class_id]
+                
+                # Average sv_sims across all instances of the current class
+                avg_sv_sims = torch.mean(sv_sims_class, dim=0)
+                
+                # Calculate distances between avg_sv_sims and each prototype
+                distances = torch.norm(prototype_matrix - avg_sv_sims, dim=1)
+                
+                # Identify the index of the closest prototype
+                closest_prototype_index = torch.argmin(distances).item()
+                
+                # Map the class_id to the closest prototype index
+                prototype_to_class_mapping[class_id] = closest_prototype_index
+                
+    return prototype_to_class_mapping
+
+def visualize_projected_prototypes(config, train_ds, save):    
+    multivariable_module = load_multivariable_prototypes(config).to(device)
+    multivariable_module.eval()
+    indices_to_use = list(range(0, 100)) + list(range(2100, 2200)) + list(range(4200, 4300)) + list(range(6300, 6400))
+    prototype_to_class_mapping = generate_prototype_to_class_mapping(multivariable_module, train_ds, indices_to_use)
+    prototype_matrix = multivariable_module.prototypes
+    train_loader = torch.utils.data.DataLoader(train_ds, batch_size=len(indices_to_use), shuffle=False, sampler=torch.utils.data.SubsetRandomSampler(indices_to_use))
+    
+    fig, axs = plt.subplots(4, 4, figsize=(12, 12))
+    colors = ['red', 'blue', 'green', 'orange']
+    classes_of_interest = [0, 21, 42, 63]
+    variable_names = ['Variable 1', 'Variable 2', 'Variable 3', 'Variable 4']
+
+    global_min = float('inf')
+    global_max = float('-inf')
+
+    with torch.no_grad():
         wrapper = multivariable_module.wrapper
-        for i in range(multivariable_module.num_classes):
-            prototype = prototype_matrix[i]
+        for c, class_id in enumerate(classes_of_interest):
+            prototype_index = prototype_to_class_mapping[class_id]
+            prototype = prototype_matrix[prototype_index]
             chunks = prototype.split(wrapper.num_prototypes)
-            for j in range(len(chunks)):
-                index = torch.argmax(chunks[j])
+            
+            for j, chunk in enumerate(chunks):
+                index = torch.argmax(chunk)
                 sv_prototype = wrapper.single_variable_prototype_modules[j].prototypes[index]
 
                 for data_matrix, labels in train_loader:
+                    data_matrix, labels = data_matrix.to(device), labels.to(device)
                     single_variable_data = data_matrix[:, :, j].unsqueeze(2).float()
                     embeddings = wrapper.single_variable_prototype_modules[j].encoder(single_variable_data)
                     distances = torch.norm(embeddings - sv_prototype, dim=1)
                     closest_index = torch.argmin(distances).item()
                     closest_point = single_variable_data[closest_index].squeeze(1)
-                    ax = axs[i, j]
-                    ax.plot(closest_point, c=colors[i])
-                    if j == 0:
-                        ax.set_ylabel(classes[i])
-    fig.align_ylabels()
-    plt.show()
+                    ax = axs[c, j]
 
+                    ax.plot(closest_point.cpu(), c=colors[j])
+                    
+                    local_min = closest_point.min().item()
+                    local_max = closest_point.max().item()
+                    global_min = min(global_min, local_min)
+                    global_max = max(global_max, local_max)
+
+                    if j == 0:
+                        ax.set_ylabel(f'Class {class_id}')
+                    if c < len(classes_of_interest) - 1:
+                        ax.set_xticks([])
+                    if j > 0:
+                        ax.set_yticks([])
+                    if c == 0:
+                        ax.set_title(variable_names[j])
+
+        for ax in axs.flat:
+            ax.set_ylim(global_min, global_max)
+
+    fig.align_ylabels()
+    if save:
+        save_name = "visualizations/simulated_6400/projected.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
                 
