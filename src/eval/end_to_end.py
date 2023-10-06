@@ -74,7 +74,9 @@ def main(args):
             d_min=single_variable_prototypes_config['d_min']
         ).to(device)
 
-        trainer.initialize_prototypes()
+        # if args.initialize:
+        if True:
+            trainer.initialize_prototypes()
         trainer.train()
 
         multivariable_module = MultivariableModule(
@@ -104,7 +106,8 @@ def main(args):
             d_min=multivariable_config['d_min']
         ).to(device)
 
-        trainer.initialize_prototypes()
+        if args.initialize:
+            trainer.initialize_prototypes()
         trainer.train()
 
         accuracy = trainer.evaluate(use_test=True)
@@ -117,6 +120,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
     parser.add_argument("--resamples", type=int, help="Number of resamples")
+    parser.add_argument("--initialize", action=argparse.BooleanOptionalAction, default=False, help="Whether to use k-means++ initialization for prototypes")
 
     args = parser.parse_args()
     main(args)
