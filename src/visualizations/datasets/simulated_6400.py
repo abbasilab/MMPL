@@ -174,7 +174,7 @@ def visualize_multivariable_prototypes(config, save):
     plt.figure()
 
     multivariable_module = load_multivariable_prototypes(config)
-    prototypes = multivariable_module.prototypes[:, :-4]
+    prototypes = multivariable_module.prototypes#[:, :-4]
     prototypes_list = [prototypes[i, :] for i in range(prototypes.shape[0])]
     sorted_prototypes = sorted(prototypes_list, key=sorting_key)
     sorted_prototypes_tensor = torch.stack(sorted_prototypes).cpu().detach().numpy()

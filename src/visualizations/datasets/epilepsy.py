@@ -144,7 +144,7 @@ def visualize_multivariable_prototypes(config, save):
 
     num_variables = multivariable_module.num_variables
     num_sv_prototypes = multivariable_module.num_sv_prototypes
-    for i in range(num_variables, num_variables*num_sv_prototypes, num_variables):
+    for i in range(num_sv_prototypes, num_variables*num_sv_prototypes, num_sv_prototypes):
         ax.axvline(x=i, color='white', linewidth=3)
 
     if save:
