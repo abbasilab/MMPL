@@ -164,16 +164,23 @@ def visualize_projected_prototypes(config, train_ds, save):
     multivariable_module = load_multivariable_prototypes(config)
     multivariable_module.eval()
     train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False, pin_memory=True)
-    fig, axs = plt.subplots(4, 3, figsize=(6.75, 9))
+    fig, axs = plt.subplots(4, 3, figsize=(10, 9))
     colors = ['red', 'blue', 'green', 'orange']
     classes = ['Standing', 'Walking', 'Running', "Badminton"]
+    variable_names = ['Acc (x)', 'Acc (y)', 'Acc (z)']  # Replace with your actual variable names
+    
+    global_min = float('inf')
+    global_max = float('-inf')
+    
     with torch.no_grad():
-        prototype_matrix = multivariable_module.prototypes
+        prototype_matrix = multivariable_module.prototypes[:, :12]
+        new_order = [0,3,1,2]
+        prototype_matrix = prototype_matrix[new_order]
         wrapper = multivariable_module.wrapper
         for i in range(multivariable_module.num_classes):
             prototype = prototype_matrix[i]
             chunks = prototype.split(wrapper.num_prototypes)
-            for j in range(3):
+            for j in range(len(chunks)):
                 index = torch.argmax(chunks[j])
                 sv_prototype = wrapper.single_variable_prototype_modules[j].prototypes[index]
 
@@ -184,10 +191,30 @@ def visualize_projected_prototypes(config, train_ds, save):
                     closest_index = torch.argmin(distances).item()
                     closest_point = single_variable_data[closest_index].squeeze(1)
                     ax = axs[i, j]
-                    ax.plot(closest_point, c=colors[int(labels[closest_index])])
+                    
+                    ax.plot(closest_point, c=colors[i])
+                    
+                    local_min = closest_point.min().item()
+                    local_max = closest_point.max().item()
+                    global_min = min(global_min, local_min)
+                    global_max = max(global_max, local_max)
+                    
                     if j == 0:
-                        ax.set_ylabel(classes[int(labels[closest_index])])
+                        ax.set_ylabel(classes[i])
+                    if i < multivariable_module.num_classes - 1:
+                        ax.set_xticks([])  # Remove xticks for non-bottom-row plots
+                    if j > 0:
+                        ax.set_yticks([])  # Remove yticks for non-left-column plots
+                    if i == 0:
+                        ax.set_title(variable_names[j])  # Set column title for top-row plots
+                        
+    for ax in axs.flat:
+        ax.set_ylim(global_min, global_max)
+        
     fig.align_ylabels()
+    if save:
+        save_name = "visualizations/basicmotions/projected.pdf"
+        plt.savefig(save_name, dpi=300)
     plt.show()
 
 def visualize_characters(config, train_ds, save):

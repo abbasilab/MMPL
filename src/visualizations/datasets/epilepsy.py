@@ -156,9 +156,14 @@ def visualize_projected_prototypes(config, train_ds, save):
     multivariable_module = load_multivariable_prototypes(config)
     multivariable_module.eval()
     train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False, pin_memory=True)
-    fig, axs = plt.subplots(4, 3, figsize=(6.75, 9))
-    colors = ['red', 'green', 'blue', 'orange']
-    classes = ['Epilepsy', 'Running', 'Walking', "Sawing"]
+    fig, axs = plt.subplots(4, 3, figsize=(10, 9))
+    colors = ['red', 'blue', 'green', 'orange']
+    classes = ['Epilepsy', 'Walking', 'Running', "Sawing"]
+    variable_names = ['Acc (x)', 'Acc (y)', 'Acc (z)']  # Replace with your actual variable names
+    
+    global_min = float('inf')
+    global_max = float('-inf')
+    
     with torch.no_grad():
         prototype_matrix = multivariable_module.prototypes
         wrapper = multivariable_module.wrapper
@@ -176,10 +181,30 @@ def visualize_projected_prototypes(config, train_ds, save):
                     closest_index = torch.argmin(distances).item()
                     closest_point = single_variable_data[closest_index].squeeze(1)
                     ax = axs[i, j]
+                    
                     ax.plot(closest_point, c=colors[i])
+                    
+                    local_min = closest_point.min().item()
+                    local_max = closest_point.max().item()
+                    global_min = min(global_min, local_min)
+                    global_max = max(global_max, local_max)
+                    
                     if j == 0:
                         ax.set_ylabel(classes[i])
+                    if i < multivariable_module.num_classes - 1:
+                        ax.set_xticks([])  # Remove xticks for non-bottom-row plots
+                    if j > 0:
+                        ax.set_yticks([])  # Remove yticks for non-left-column plots
+                    if i == 0:
+                        ax.set_title(variable_names[j])  # Set column title for top-row plots
+                        
+    for ax in axs.flat:
+        ax.set_ylim(global_min, global_max)
+        
     fig.align_ylabels()
+    if save:
+        save_name = "visualizations/epilepsy/projected.pdf"
+        plt.savefig(save_name, dpi=300)
     plt.show()
 
                 
