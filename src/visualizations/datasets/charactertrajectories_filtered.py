@@ -226,6 +226,9 @@ def visualize_characters(config, train_ds, save):
                 ax.get_xaxis().set_visible(False)
                 ax.get_yaxis().set_visible(False)
                 ax.set_title(classes[label])
+    if save:
+        save_name = "visualizations/charactertrajectories_filtered/projected.pdf"
+        plt.savefig(save_name, dpi=300)
     plt.show()
 
 
