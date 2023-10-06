@@ -134,7 +134,21 @@ def visualize_multivariable_prototypes(config, save):
         sorted_blocks = blocks[sorted_indices]
         sorted_prototypes[:, start_idx:end_idx] = sorted_blocks
 
-    sns.heatmap(sorted_prototypes.cpu().detach().numpy())
+    sorted_prototypes_tensor = sorted_prototypes.cpu().detach().numpy()
+    ax = sns.heatmap(sorted_prototypes_tensor)
+    cbar = ax.collections[0].colorbar
+    min_val = round(np.min(sorted_prototypes_tensor), 2)
+    max_val = round(np.max(sorted_prototypes_tensor), 2)
+    mid_val = round((min_val + max_val) / 2, 2)
+    cbar.set_ticks([min_val, mid_val, max_val])
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    num_variables = multivariable_module.num_variables
+    num_sv_prototypes = multivariable_module.num_sv_prototypes
+    for i in range(num_sv_prototypes, num_variables*num_sv_prototypes, num_sv_prototypes):
+        ax.axvline(x=i, color='white', linewidth=3)
 
     if save:
         save_name = "visualizations/charactertrajectories_filtered/multivariable_prototypes.pdf"

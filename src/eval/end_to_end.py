@@ -10,7 +10,7 @@ from src.models.single_variable_prototypes import SingleVariablePrototypesWrappe
 from src.train.single_variable_prototypes.trainer import SingleVariablePrototypesTrainer
 from src.models.multivariable_prototypes import MultivariableModule
 from src.train.multivariable_prototypes.trainer import MultivariableModuleTrainer
-from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
+from src.utils.utils import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

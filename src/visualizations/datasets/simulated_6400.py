@@ -119,7 +119,7 @@ def visualize_single_variable_prototypes(config, test_ds, save):
                             ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
 
                         idx = np.where(labels == len(classes))[0]
-                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', s=50, c='black')
+                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', s=75, c='magenta')
 
         handles = [plt.Line2D([0], [0], marker='o', color='w', label=pattern_labels[c],
                        markersize=10, markerfacecolor=colors[c]) for c in range(5)]
@@ -177,8 +177,21 @@ def visualize_multivariable_prototypes(config, save):
     prototypes = multivariable_module.prototypes[:, :-4]
     prototypes_list = [prototypes[i, :] for i in range(prototypes.shape[0])]
     sorted_prototypes = sorted(prototypes_list, key=sorting_key)
-    sorted_prototypes_tensor = torch.stack(sorted_prototypes)
-    sns.heatmap(sorted_prototypes_tensor.cpu().detach().numpy())
+    sorted_prototypes_tensor = torch.stack(sorted_prototypes).cpu().detach().numpy()
+    ax = sns.heatmap(sorted_prototypes_tensor)
+    cbar = ax.collections[0].colorbar
+    min_val = round(np.min(sorted_prototypes_tensor), 2)
+    max_val = round(np.max(sorted_prototypes_tensor), 2)
+    mid_val = round((min_val + max_val) / 2, 2)
+    cbar.set_ticks([min_val, mid_val, max_val])
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    num_variables = multivariable_module.num_variables
+    num_sv_prototypes = multivariable_module.num_sv_prototypes
+    for i in range(num_variables, num_variables*num_sv_prototypes, num_variables):
+        ax.axvline(x=i, color='white', linewidth=3)
 
     if save:
         save_name = "visualizations/simulated_6400/multivariable_prototypes.pdf"
