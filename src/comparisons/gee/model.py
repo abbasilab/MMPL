@@ -87,7 +87,7 @@ class AutoencoderPrototypeModel(torch.nn.Module):
         self.prototype_network = PrototypeNetwork(num_prototypes, seq_len, latent_dim)
 
         if num_layers == 1:
-            self.linear = torch.nn.Linear(num_classes, num_classes)
+            self.linear = torch.nn.Linear(num_prototypes, num_classes)
         else:
             layers = [torch.nn.Linear(num_classes, num_classes), torch.nn.ReLU()]
             for i in range(num_layers - 1):

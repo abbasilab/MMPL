@@ -165,6 +165,8 @@ class Trainer(torch.nn.Module):
                 plt.figure()
                 with torch.no_grad():
                     _, _, embeddings = self.model(data_matrix.float())
+                    prototypes = self.model.prototype_network.prototypes
+                    embeddings = torch.concat([embeddings, prototypes], dim=0)
 
                     reducer = umap.UMAP()
                     embeddings_2d = reducer.fit_transform(embeddings.cpu())
@@ -177,6 +179,12 @@ class Trainer(torch.nn.Module):
                         scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label)
                         handles.append(scatter)
                         lbls.append(label)
+
+                    labels = torch.concat([labels, len(self.classes)*torch.ones((prototypes.shape[0],)).to(device)], dim=0).cpu()
+                    idx = np.where(labels == len(self.classes))[0]
+                    scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', s=75, c='magenta')
+                    handles.append(scatter)
+                    lbls.append("Prototype")
                         
                     plt.legend(handles, lbls)
                     plt.title("Latent Space")
@@ -211,14 +219,14 @@ class Trainer(torch.nn.Module):
 
 if __name__ == "__main__":
     model = AutoencoderPrototypeModel(
-        input_dim=4,
-        hidden_dim=64,
-        latent_dim=32,
-        num_prototypes=64,
-        seq_len=100,
-        # seq_len=206,
+        input_dim=3,
+        hidden_dim=32,
+        latent_dim=16,
+        num_prototypes=5,
+        # seq_len=100,
+        seq_len=206,
         # seq_len=119,
-        num_classes=64,
+        num_classes=4,
         num_layers=1
     ).to(device)
     model.float()
@@ -229,10 +237,10 @@ if __name__ == "__main__":
     train_ds, test_ds = get_ds("data/epilepsy/processed/train.ts", class_to_index), get_ds("data/epilepsy/processed/test.ts", class_to_index)
     # class_to_index={"b":0, "d":1, "p":2,"q":3}
     # train_ds, test_ds = get_ds("data/charactertrajectories_filtered/processed/train.ts", class_to_index), get_ds("data/charactertrajectories_filtered/processed/test.ts", class_to_index)
-    class_to_index={}
-    for i in range(64):
-        class_to_index[str(i)] = i
-    train_ds, test_ds = get_ds("data/simulated_6400/processed/train.ts", class_to_index), get_ds("data/simulated_6400/processed/val.ts", class_to_index)
+    # class_to_index={}
+    # for i in range(64):
+    #     class_to_index[str(i)] = i
+    # train_ds, test_ds = get_ds("data/simulated_6400/processed/train.ts", class_to_index), get_ds("data/simulated_6400/processed/val.ts", class_to_index)
     
     trainer = Trainer(
         model,
@@ -240,20 +248,20 @@ if __name__ == "__main__":
         test_ds,
         # ["Standing", "Running", "Walking", "Badminton"],
         # batch_size=40,
-        # ["Epilepsy", "Walking", "Running", "Sawing"],
-        # batch_size=137,
+        ["Epilepsy", "Walking", "Running", "Sawing"],
+        batch_size=137,
         # ["b", "d", "p", "q"],
         # batch_size=127,
-        [str(i) for i in range(64)],
-        batch_size=640,
+        # [str(i) for i in range(64)],
+        # batch_size=640,
         lr=0.01,
         gamma=0.999,
-        epochs=500,
-        l1=0.0,
-        l2=1.0,
-        l3=1.0,
-        l4=1.0,
-        d_min=1.0
+        epochs=2000,
+        l1=1.0,
+        l2=100.0,
+        l3=0.1,
+        l4=0.1,
+        d_min=2.0
     ).to(device)
 
     trainer.train()
