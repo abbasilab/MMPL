@@ -11,7 +11,7 @@ from src.utils.utils import *
 def simulated_6400_visualize(dataset, type, save):
     config = get_config_from_dataset(dataset)
     train_ds = get_ds(get_train_path_from_dataset(dataset), config['class_to_index'])
-    test_ds = get_ds(get_test_path_from_dataset(dataset, train=False), config['class_to_index'])
+    test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'])
     if type == "latent-space":
         visualize_latent_space(config, test_ds, save)
     elif type == "single-var":
@@ -236,7 +236,7 @@ def visualize_projected_prototypes(config, train_ds, save):
     prototype_matrix = multivariable_module.prototypes
     train_loader = torch.utils.data.DataLoader(train_ds, batch_size=len(indices_to_use), shuffle=False, sampler=torch.utils.data.SubsetRandomSampler(indices_to_use))
     
-    fig, axs = plt.subplots(4, 4, figsize=(12, 12))
+    fig, axs = plt.subplots(4, 3, figsize=(12, 9))
     colors = ['red', 'blue', 'green', 'orange']
     classes_of_interest = [0, 21, 42, 63]
     variable_names = ['Variable 1', 'Variable 2', 'Variable 3', 'Variable 4']
@@ -252,6 +252,8 @@ def visualize_projected_prototypes(config, train_ds, save):
             chunks = prototype.split(wrapper.num_prototypes)
             
             for j, chunk in enumerate(chunks):
+                if j == len(chunks) - 1:
+                    break
                 index = torch.argmax(chunk)
                 sv_prototype = wrapper.single_variable_prototype_modules[j].prototypes[index]
 
