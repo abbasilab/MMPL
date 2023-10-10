@@ -13,9 +13,9 @@ class FrequencyDomainVariable:
     def __init__(self, active_frequency, inactive_frequencies):
         """Frequencies is a list that shows the frequencies and whether they are active or inactive"""
         self.active_frequency = active_frequency
-        self.inactive_frequency = inactive_frequencies
+        self.inactive_frequency = [inactive_frequencies]
     def sample_active(self, active):
-        return np.sin((np.random.normal(active, 0.1)) * np.linspace(0, 2 * math.pi,100) + np.random.rand() * 2 * math.pi) + np.random.normal(0.0,0.1,100)
+        return np.sin((np.random.normal(4*active, 0.1)) * np.linspace(0, 2 * math.pi,100) + np.random.rand() * 2 * math.pi) + np.random.normal(0.0,0.1,100)
     def sample_inactive(self):
         current_frequency = random.choice(self.inactive_frequency)
         return np.sin((np.random.normal(current_frequency, 0.1)) * np.linspace(0, 2 * math.pi,100) + np.random.rand() * 2 * math.pi) + np.random.normal(0.0, 0.1, 100)
