@@ -290,4 +290,3 @@ def visualize_projected_prototypes(config, train_ds, save):
         save_name = "visualizations/simulated_6400/projected.pdf"
         plt.savefig(save_name, dpi=300)
     plt.show()
-                

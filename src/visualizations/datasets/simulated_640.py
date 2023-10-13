@@ -22,6 +22,8 @@ def simulated_640_visualize(dataset, type, save):
         visualize_multivariable_prototypes(config, save)
     elif type == "project":
         visualize_projected_prototypes(config, train_ds, save)
+    elif type == "data":
+        visualize_dataset(train_ds, save)
     
 
 def visualize_latent_space(config, test_ds, save):
@@ -291,3 +293,52 @@ def visualize_projected_prototypes(config, train_ds, save):
         plt.savefig(save_name, dpi=300)
     plt.show()
                 
+def visualize_dataset(train_ds, save):
+
+    train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False, pin_memory=True)
+
+    fig = plt.figure(figsize=(12, 10))
+
+    grid_shape = (5, 4)  # 5 rows (4 for data, 1 for ellipsis), 4 columns
+
+    display_classes = [0, 1, 62, 63]
+    row_labels = [f"Class {i+1}" for i in display_classes]
+    col_labels = [f"Variable {i+1}" for i in range(4)]
+    colors = ['red', 'blue', 'green', 'orange']
+
+    ellipsis_row = 2
+
+    with torch.no_grad():
+        for data_matrix, labels in train_loader:
+            axes = []
+            for i, class_idx in enumerate(display_classes):
+                row = i if i < 2 else i + 1  # Skip the ellipsis row
+                for j in range(4):
+                    ax = plt.subplot2grid(grid_shape, (row, j))
+                    axes.append(ax)
+                    
+                    ax.plot(data_matrix[class_idx*10, :, j], c=colors[j])
+                    
+                    if j == 0:
+                        ax.set_ylabel(row_labels[i])
+                    if row == grid_shape[0] - 1:
+                        ax.set_xlabel(col_labels[j])
+                    
+                    if row < grid_shape[0] - 1:
+                        ax.set_xticks([])
+                    
+                    if j > 0:
+                        ax.set_yticks([])
+
+            # Add vertical ellipsis in the gap
+            for j in range(4):
+                ax = plt.subplot2grid(grid_shape, (ellipsis_row, j))
+                ax.annotate('...', xy=(0.5, 0.5), xycoords='axes fraction', 
+                            fontsize=20, ha='center')
+                ax.axis('off')  # Turn off axis
+
+            plt.tight_layout()
+            if save:
+                save_name = "visualizations/simulated_640/data.pdf"
+                plt.savefig(save_name, dpi=300)
+            plt.show()

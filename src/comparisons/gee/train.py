@@ -219,49 +219,48 @@ class Trainer(torch.nn.Module):
 
 if __name__ == "__main__":
     model = AutoencoderPrototypeModel(
-        input_dim=3,
+        input_dim=4,
         hidden_dim=32,
         latent_dim=16,
-        num_prototypes=5,
-        # seq_len=100,
-        seq_len=206,
+        num_prototypes=100,
+        seq_len=100,
+        # seq_len=206,
         # seq_len=119,
-        num_classes=4,
+        num_classes=64,
         num_layers=1
     ).to(device)
     model.float()
 
     # class_to_index={"standing":0, "running":1, "walking":2,"badminton":3}
     # train_ds, test_ds = get_ds("data/basicmotions/processed/train.ts", class_to_index), get_ds("data/basicmotions/processed/test.ts", class_to_index)
-    class_to_index={"epilepsy":0, "walking":1, "running":2,"sawing":3}
-    train_ds, test_ds = get_ds("data/epilepsy/processed/train.ts", class_to_index), get_ds("data/epilepsy/processed/test.ts", class_to_index)
+    # class_to_index={"epilepsy":0, "walking":1, "running":2,"sawing":3}
+    # train_ds, test_ds = get_ds("data/epilepsy/processed/train.ts", class_to_index), get_ds("data/epilepsy/processed/test.ts", class_to_index)
     # class_to_index={"b":0, "d":1, "p":2,"q":3}
     # train_ds, test_ds = get_ds("data/charactertrajectories_filtered/processed/train.ts", class_to_index), get_ds("data/charactertrajectories_filtered/processed/test.ts", class_to_index)
-    # class_to_index={}
-    # for i in range(64):
-    #     class_to_index[str(i)] = i
-    # train_ds, test_ds = get_ds("data/simulated_6400/processed/train.ts", class_to_index), get_ds("data/simulated_6400/processed/val.ts", class_to_index)
-    
+    class_to_index={}
+    for i in range(64):
+        class_to_index[str(i)] = i
+    train_ds, test_ds = get_ds("data/simulated_640/processed/train.ts", class_to_index), get_ds("data/simulated_640/processed/val.ts", class_to_index)
     trainer = Trainer(
         model,
         train_ds,
         test_ds,
         # ["Standing", "Running", "Walking", "Badminton"],
         # batch_size=40,
-        ["Epilepsy", "Walking", "Running", "Sawing"],
-        batch_size=137,
+        # ["Epilepsy", "Walking", "Running", "Sawing"],
+        # batch_size=137,
         # ["b", "d", "p", "q"],
-        # batch_size=127,
-        # [str(i) for i in range(64)],
-        # batch_size=640,
+        # batch_size=275,
+        [str(i) for i in range(64)],
+        batch_size=640,
         lr=0.01,
         gamma=0.999,
         epochs=2000,
-        l1=1.0,
-        l2=100.0,
-        l3=0.1,
-        l4=0.1,
-        d_min=2.0
+        l1=0.0,
+        l2=0.01,
+        l3=0.01,
+        l4=0.01,
+        d_min=1.0
     ).to(device)
 
     trainer.train()
