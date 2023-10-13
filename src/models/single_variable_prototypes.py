@@ -50,15 +50,7 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
             )
         self.single_variable_prototype_modules = torch.nn.ModuleList(single_variable_prototype_modules)
 
-        if num_layers == 1:
-            self.linear = torch.nn.Linear(num_variables * num_prototypes, num_classes)
-        else:
-            layers = [torch.nn.Linear(num_variables * num_prototypes, num_classes), torch.nn.ReLU()]
-            for i in range(num_layers - 1):
-                layers.append(torch.nn.Linear(num_classes, num_classes))
-                if i != num_layers - 2:
-                    layers.append(torch.nn.ReLU())
-            self.linear = torch.nn.Sequential(*layers)
+        self.linear = torch.nn.Linear(num_variables * num_prototypes, num_classes)
 
     def forward(self, x):
         """

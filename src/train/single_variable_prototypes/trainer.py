@@ -180,6 +180,15 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                 coverage_penalty = self.encoded_space_coverage_penalty(data_matrix)
                 self.encoded_space_coverage_penalties.append(float(coverage_penalty))
 
+                # if epoch == 0:
+                #     print("Epoch: " + str(epoch))
+                #     print("Diversity Penalty: " + str(diversity_penalty))
+                #     print("Similarity Penalty: " + str(similarity_penalty))
+                #     print("Coverage Penalty: " + str(coverage_penalty))
+                #     self.visualize_single_variable_prototypes()
+                #     exit()
+
+
                 total_loss = (self.l1)*classification_loss + \
                              (self.l2)*diversity_penalty + \
                              (self.l3)*similarity_penalty + \

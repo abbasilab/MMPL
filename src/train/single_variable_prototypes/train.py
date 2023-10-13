@@ -50,7 +50,7 @@ def main(args):
         trainer.initialize_prototypes()
     trainer.train()
 
-    trainer.evaluate()
+    trainer.evaluate(use_test=True)
 
     if args.save:
         trainer.save(single_variable_prototypes_config['save_dir'])

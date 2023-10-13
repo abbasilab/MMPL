@@ -135,12 +135,12 @@ num_variables: 4
 
 encoding:
   input_dim: 1
-  hidden_dim: 64
-  latent_dim: 32
+  hidden_dim: 32
+  latent_dim: 16
   batch_size: 640
   lr: 0.01
   gamma: 0.999
-  epochs: 1000
+  epochs: 750
   m: 0.1
   save_dir: models/simulated_6400/encoding/
 
@@ -148,14 +148,14 @@ single_variable_prototypes:
   num_prototypes: 4
   num_layers: 1
   batch_size: 640
-  lr: 0.1
+  lr: 0.01
   gamma: 0.999
-  epochs: 200
+  epochs: 500
   l1: 1.0
-  l2: 0.0001
-  l3: 0.0001
-  l4: 1.0
-  d_min: 1.0
+  l2: 4.0
+  l3: 0.8
+  l4: 0.8
+  d_min: 0.2
   save_dir: models/simulated_6400/single_variable_prototypes/
 
 multivariable_prototypes:
