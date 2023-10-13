@@ -141,32 +141,32 @@ encoding:
   lr: 0.01
   gamma: 0.999
   epochs: 1000
-  m: 1.0
+  m: 0.1
   save_dir: models/simulated_640/encoding/
 
 single_variable_prototypes:
   num_prototypes: 4
-  num_layers: 3
-  batch_size: 640
-  lr: 0.01
-  gamma: 0.999
-  epochs: 250
-  l1: 1.0
-  l2: 1.0
-  l3: 1.0
-  l4: 10.0
-  d_min: 1.0
-  save_dir: models/simulated_640/single_variable_prototypes/
-
-multivariable_prototypes:
   num_layers: 1
   batch_size: 640
   lr: 0.01
   gamma: 0.999
-  epochs: 1500
+  epochs: 2000
+  l1: 1.0
+  l2: 1.0
+  l3: 1.0
+  l4: 10.0
+  d_min: 0.1
+  save_dir: models/simulated_640/single_variable_prototypes/
+
+multivariable_prototypes:
+  num_layers: 0
+  batch_size: 640
+  lr: 0.01
+  gamma: 0.999
+  epochs: 500
   l1: 1.0
   l2: 1.0
   l3: 1.0
   l4: 1.0
-  d_min: 2.0
+  d_min: 0.3
   save_dir: models/simulated_640/multivariable_prototypes/

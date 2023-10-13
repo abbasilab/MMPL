@@ -6,7 +6,7 @@ from src.data.data import get_ds
 from src.models.encoding import Encoder
 from src.train.encoding.trainer import EncoderTrainer
 from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
-
+from src.experiment import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main(args):
@@ -38,6 +38,9 @@ def main(args):
 
     if args.save:
         trainer.save(encoding_config['save_dir'])
+
+    max_intra_cluster_distance(encoders, trainer.test_dataloader, args.dataset)
+    inter_cluster_distance(encoders, trainer.test_dataloader, args.dataset)
 
     if args.view:
         trainer.plot_contrastive_losses()
