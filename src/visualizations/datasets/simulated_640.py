@@ -11,7 +11,7 @@ from src.utils.utils import *
 def simulated_640_visualize(dataset, type, save):
     config = get_config_from_dataset(dataset)
     train_ds = get_ds(get_train_path_from_dataset(dataset), config['class_to_index'])
-    test_ds = get_ds(get_test_path_from_dataset(dataset), config['class_to_index'])
+    test_ds = get_ds(get_test_path_from_dataset(dataset, train=False), config['class_to_index'])
     if type == "latent-space":
         visualize_latent_space(config, test_ds, save)
     elif type == "single-var":
@@ -231,7 +231,7 @@ def generate_prototype_to_class_mapping(multivariable_module, train_ds, indices_
 def visualize_projected_prototypes(config, train_ds, save):    
     multivariable_module = load_multivariable_prototypes(config).to(device)
     multivariable_module.eval()
-    indices_to_use = list(range(0, 100)) + list(range(2100, 2200)) + list(range(4200, 4300)) + list(range(6300, 640))
+    indices_to_use = list(range(0, 10)) + list(range(210, 220)) + list(range(420, 430)) + list(range(630, 640))
     prototype_to_class_mapping = generate_prototype_to_class_mapping(multivariable_module, train_ds, indices_to_use)
     prototype_matrix = multivariable_module.prototypes
     train_loader = torch.utils.data.DataLoader(train_ds, batch_size=len(indices_to_use), shuffle=False, sampler=torch.utils.data.SubsetRandomSampler(indices_to_use))
