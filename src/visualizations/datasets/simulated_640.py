@@ -331,6 +331,11 @@ def visualize_dataset(train_ds, save):
                         ax.set_yticks([])
 
             # Add vertical ellipsis in the gap
+            for i in range(0, len(axes), 4):
+                min_val = min(ax.get_ylim()[0] for ax in axes[i:i + 4])
+                max_val = max(ax.get_ylim()[1] for ax in axes[i:i + 4])
+                for ax in axes[i:i + 4]:
+                    ax.set_ylim(min_val, max_val)
             for j in range(4):
                 ax = plt.subplot2grid(grid_shape, (ellipsis_row, j))
                 ax.annotate('...', xy=(0.5, 0.5), xycoords='axes fraction', 
