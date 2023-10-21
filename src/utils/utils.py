@@ -14,6 +14,13 @@ def get_config_from_dataset(dataset):
 
     return config
 
+def get_comparison_config_from_dataset(comparison, dataset):
+    config_path = "configs/" + comparison + "/" + dataset + "/config.yaml"
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    return config
+
 def get_train_path_from_dataset(dataset):
     return "data/" + dataset + "/processed/train.ts"
 

@@ -4,9 +4,6 @@ import torch
 from tqdm import tqdm
 import umap
 
-from src.data.data import get_ds
-from src.comparisons.gee.model import AutoencoderPrototypeModel
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Trainer(torch.nn.Module):
@@ -158,6 +155,29 @@ class Trainer(torch.nn.Module):
         plt.legend()
         plt.show()
 
+    def visualize_latent_space(self):
+        with torch.no_grad():
+            for data_matrix, labels in self.train_dataloader:
+                data_matrix, labels = data_matrix.to(device), labels.to(device)
+                plt.figure()
+                with torch.no_grad():
+                    _, _, embeddings = self.model(data_matrix.float())
+
+                    reducer = umap.UMAP()
+                    embeddings_2d = reducer.fit_transform(embeddings.cpu())
+
+                    string_labels = np.array([self.classes[label.item()] for label in labels])
+
+                    handles, lbls = [], []
+                    for label in self.classes:
+                        idx = np.where(string_labels == label)[0]
+                        scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label)
+                        handles.append(scatter)
+                        lbls.append(label)
+                        
+                    plt.title("Latent Space")
+                    plt.show()
+
     def visualize_prototypes(self):
         with torch.no_grad():
             for data_matrix, labels in self.train_dataloader:
@@ -186,7 +206,6 @@ class Trainer(torch.nn.Module):
                     handles.append(scatter)
                     lbls.append("Prototype")
                         
-                    plt.legend(handles, lbls)
                     plt.title("Latent Space")
                     plt.show()
 
@@ -217,59 +236,12 @@ class Trainer(torch.nn.Module):
             accuracy = float(numerator) / float(denominator)
             print("Accuracy: " + str(accuracy))
 
-if __name__ == "__main__":
-    model = AutoencoderPrototypeModel(
-        input_dim=4,
-        hidden_dim=32,
-        latent_dim=16,
-        num_prototypes=100,
-        seq_len=100,
-        # seq_len=206,
-        # seq_len=119,
-        num_classes=64,
-        num_layers=1
-    ).to(device)
-    model.float()
+    def save(self, save_dir):
+        save_name = save_dir + "model.pth"
+        torch.save(self.model.state_dict(), save_name)
 
-    # class_to_index={"standing":0, "running":1, "walking":2,"badminton":3}
-    # train_ds, test_ds = get_ds("data/basicmotions/processed/train.ts", class_to_index), get_ds("data/basicmotions/processed/test.ts", class_to_index)
-    # class_to_index={"epilepsy":0, "walking":1, "running":2,"sawing":3}
-    # train_ds, test_ds = get_ds("data/epilepsy/processed/train.ts", class_to_index), get_ds("data/epilepsy/processed/test.ts", class_to_index)
-    # class_to_index={"b":0, "d":1, "p":2,"q":3}
-    # train_ds, test_ds = get_ds("data/charactertrajectories_filtered/processed/train.ts", class_to_index), get_ds("data/charactertrajectories_filtered/processed/test.ts", class_to_index)
-    class_to_index={}
-    for i in range(64):
-        class_to_index[str(i)] = i
-    train_ds, test_ds = get_ds("data/simulated_640/processed/train.ts", class_to_index), get_ds("data/simulated_640/processed/val.ts", class_to_index)
-    trainer = Trainer(
-        model,
-        train_ds,
-        test_ds,
-        # ["Standing", "Running", "Walking", "Badminton"],
-        # batch_size=40,
-        # ["Epilepsy", "Walking", "Running", "Sawing"],
-        # batch_size=137,
-        # ["b", "d", "p", "q"],
-        # batch_size=275,
-        [str(i) for i in range(64)],
-        batch_size=640,
-        lr=0.01,
-        gamma=0.999,
-        epochs=2000,
-        l1=0.0,
-        l2=0.01,
-        l3=0.01,
-        l4=0.01,
-        d_min=1.0
-    ).to(device)
+    def load(self, save_dir):
+        save_name = save_dir + "model.pth"
+        self.model.load_state_dict(torch.load(save_name))
 
-    trainer.train()
-    trainer.plot_classification_loss()
-    trainer.plot_reconstruction_loss()
-    trainer.plot_diversity_penalties()
-    trainer.plot_similarity_penalties()
-    trainer.plot_coverage_penalties()
-    trainer.eval()
-    trainer.eval(use_test=True)
-    trainer.visualize_prototypes()
 

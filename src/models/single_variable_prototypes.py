@@ -10,7 +10,7 @@ class SingleVariablePrototypesModule(torch.nn.Module):
         self.num_prototypes  = num_prototypes
         self.latent_dim = latent_dim
 
-        self.prototypes = torch.nn.Parameter(torch.rand(num_prototypes, latent_dim))
+        self.prototypes = torch.nn.Parameter(torch.zeros(num_prototypes, latent_dim))
 
     def forward(self, x):
         """
