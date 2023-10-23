@@ -133,21 +133,31 @@ class_to_index:
 
 num_variables: 4
 
-one_stage:
-  input_dim: 4
+single_variable_prototypes:
   hidden_dim: 32
   latent_dim: 16
-  num_prototypes: 64
-  seq_len: 100
-  num_classes: 64
+  num_prototypes: 6
   num_layers: 1
   batch_size: 640
   lr: 0.01
   gamma: 0.999
-  epochs: 3000
-  l1: 0.0
-  l2: 0.1
+  epochs: 2000
+  l1: 1.0
+  l2: 0.05
   l3: 0.05
   l4: 0.05
   d_min: 1.0
-  save_dir: models/comparisons/ming/simulated_640/
+  save_dir: models/comparisons/no_contrastive/simulated_640/
+
+multivariable_prototypes:
+  num_layers: 1
+  batch_size: 640
+  lr: 0.1
+  gamma: 0.999
+  epochs: 500
+  l1: 1.0
+  l2: 0.01
+  l3: 0.01
+  l4: 0.01
+  d_min: 0.3
+  save_dir: models/comparisons/no_contrastive/simulated_640/
