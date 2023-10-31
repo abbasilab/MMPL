@@ -1,0 +1,32 @@
+m: 0.01, hidden: 32, latent: 16
+	Variable: 0, score: 0.3828480541706085
+	Variable: 1, score: 0.4049503803253174
+	Variable: 2, score: 0.43872231245040894
+m: 0.01, hidden: 64, latent: 32
+	Variable: 0, score: 0.470672070980072
+	Variable: 1, score: 0.4277280569076538
+	Variable: 2, score: 0.4758906960487366
+m: 0.1, hidden: 32, latent: 16
+	Variable: 0, score: 0.35546210408210754
+	Variable: 1, score: 0.3485617935657501
+	Variable: 2, score: 0.4400305151939392
+m: 0.1, hidden: 64, latent: 32
+	Variable: 0, score: 0.3136623501777649
+	Variable: 1, score: 0.43272238969802856
+	Variable: 2, score: 0.3452494144439697
+m: 1.0, hidden: 32, latent: 16
+	Variable: 0, score: 0.3959425389766693
+	Variable: 1, score: 0.3369632661342621
+	Variable: 2, score: 0.2658419609069824
+m: 1.0, hidden: 64, latent: 32
+	Variable: 0, score: 0.31022751331329346
+	Variable: 1, score: 0.2382039576768875
+	Variable: 2, score: 0.3173792064189911
+m: 10.0, hidden: 32, latent: 16
+	Variable: 0, score: 0.3968261480331421
+	Variable: 1, score: -0.02009868621826172
+	Variable: 2, score: 0.00823214091360569
+m: 10.0, hidden: 64, latent: 32
+	Variable: 0, score: 0.09634348005056381
+	Variable: 1, score: 0.03597525134682655
+	Variable: 2, score: 0.06829287111759186
