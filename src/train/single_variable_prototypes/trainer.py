@@ -116,11 +116,15 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             num_prototypes = prototypes.size(0)
             penalty = 0.0
 
-            for j in range(num_prototypes):
+            for j in range(num_prototypes - 1):
+                min_dist = torch.tensor(float("inf"))
                 for k in range(j + 1, num_prototypes):
-                    distance = torch.norm(prototypes[j] - prototypes[k])
-                    term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
-                    penalty += term
+                    distance = torch.norm(prototypes[j] - prototypes[k])**2
+                    min_dist = min(min_dist, distance)
+                penalty += min_dist
+            penalty = penalty / num_prototypes
+            penalty = torch.log(penalty)
+            penalty = torch.pow(penalty, -1)
 
             total_penalty += penalty
         return total_penalty
@@ -266,7 +270,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                     ax.set_yticks([])
 
                     encoder = self.wrapper.single_variable_prototype_modules[variable].encoder
-                    for data_matrix, labels, in self.test_dataloader:
+                    for data_matrix, labels, in self.train_dataloader:
                         data_matrix, labels = data_matrix.to(device), labels.to(device)
                         single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
                         embeddings = encoder(single_variable_data)
@@ -285,7 +289,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
 
                             idx = np.where(labels == len(classes))[0]
                             ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', s=50, c='black')
-
+                        break
             handles = [plt.Line2D([0], [0], marker='o', color='w', label=pattern_labels[c],
                         markersize=10, markerfacecolor=colors[c]) for c in range(5)]
             fig.legend(handles=handles, ncol=5, loc='lower center')

@@ -11,13 +11,13 @@ from src.utils.utils import *
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 def main():
-    config = get_config_from_dataset("simulated_6400")
+    config = get_config_from_dataset("simulated_640")
     encoding_config = config['encoding']
     m_vals = [0.01, 0.1, 1.0, 10.0]
     hidden_dim_vals = [32, 64]
     latent_dim_vals = [16, 32]
 
-    for i in range(3, len(m_vals)):
+    for i in range(len(m_vals)):
         for j in range(len(hidden_dim_vals)):
             torch.cuda.empty_cache()
 
@@ -33,8 +33,8 @@ def main():
                 ))
             trainer = EncoderTrainer(
                 encoders=encoders,
-                train_ds=get_ds(get_train_path_from_dataset("simulated_6400"), config['class_to_index']),
-                test_ds=get_ds(get_test_path_from_dataset("simulated_6400"), config['class_to_index']),
+                train_ds=get_ds(get_train_path_from_dataset("simulated_640"), config['class_to_index']),
+                test_ds=get_ds(get_test_path_from_dataset("simulated_640"), config['class_to_index']),
                 classes=config['classes'],
                 num_variables=config['num_variables'],
                 batch_size=encoding_config['batch_size'],
