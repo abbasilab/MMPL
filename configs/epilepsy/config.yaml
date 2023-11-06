@@ -24,14 +24,14 @@ encoding:
 
 single_variable_prototypes:
   num_prototypes: 4
-  num_layers: 2
+  num_layers: 1
   batch_size: 137
-  lr: 0.01
+  lr: 0.001
   gamma: 0.999
-  epochs: 1000
+  epochs: 200
   l1: 1.0
-  l2: 1.0
-  l3: 1.0
+  l2: 0.01
+  l3: 0.01
   l4: 1.0
   d_min: 1.0
   save_dir: models/epilepsy/single_variable_prototypes/
@@ -43,8 +43,8 @@ multivariable_prototypes:
   gamma: 0.999
   epochs: 1000
   l1: 1.0
-  l2: 100.0
-  l3: 1.0
+  l2: 0.01
+  l3: 0.01
   l4: 1.0
   d_min: 1.0
   save_dir: models/epilepsy/multivariable_prototypes/

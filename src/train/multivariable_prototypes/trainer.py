@@ -99,12 +99,15 @@ class MultivariableModuleTrainer(torch.nn.Module):
         prototypes = self.multivariable_prototypes.prototypes
         num_prototypes = prototypes.size(0)
 
-        for j in range(num_prototypes):
+        for j in range(num_prototypes - 1):
+            min_dist = torch.tensor(float("inf"))
             for k in range(j + 1, num_prototypes):
-                distance = torch.norm(prototypes[j] - prototypes[k])
-                term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
-                total_penalty += term
-
+                distance = torch.norm(prototypes[j] - prototypes[k])**2
+                min_dist = min(min_dist, distance)
+            total_penalty += min_dist
+        total_penalty = total_penalty / num_prototypes
+        total_penalty = torch.log(total_penalty)
+        total_penalty = torch.pow(total_penalty, -1)
         return total_penalty
     
     def prototype_similarity_penalty(self, sims):
