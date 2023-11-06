@@ -14,11 +14,11 @@ def main(args):
     config = get_config_from_dataset(args.dataset)
     encoding_config = config['encoding']
     m_vals = [0.01, 0.1, 1.0, 10.0]
-    hidden_dim_vals = [32, 64]
-    latent_dim_vals = [16, 32]
+    hidden_dim_vals = [32, 64, 80]
+    latent_dim_vals = [16, 32, 64]
 
     for i in range(len(m_vals)):
-        for j in range(len(hidden_dim_vals)):
+        for j in range(2, len(hidden_dim_vals)):
             torch.cuda.empty_cache()
 
             m = m_vals[i]
@@ -51,12 +51,13 @@ def main(args):
                     f.write(f"m: {m}, hidden: {hidden_dim}, latent: {latent_dim}\n")
                     for data_matrix, labels in trainer.test_dataloader:
                         data_matrix = data_matrix.to(device)
-                        for var in range(config['num_variables']):
+                        for var in range(config['num_variables'] - 1):
                             encoder = trainer.encoders[var]
                             single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
                             embeddings = encoder(single_variable_data)
                             embeddings = embeddings.cpu().detach().numpy()
-                            score = silhouette_score(embeddings, labels)
+                            patterns = get_single_variable_patterns_from_labels(labels, var)
+                            score = silhouette_score(embeddings, patterns)
                             f.write(f"\tVariable: {var}, score: {score}\n")
                     f.close()
 
