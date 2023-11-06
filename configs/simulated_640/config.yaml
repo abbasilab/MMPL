@@ -135,8 +135,8 @@ num_variables: 4
 
 encoding:
   input_dim: 1
-  hidden_dim: 64
-  latent_dim: 32
+  hidden_dim: 80
+  latent_dim: 64
   batch_size: 640
   lr: 0.01
   gamma: 0.999
