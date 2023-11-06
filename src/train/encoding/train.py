@@ -39,9 +39,6 @@ def main(args):
     if args.save:
         trainer.save(encoding_config['save_dir'])
 
-    max_intra_cluster_distance(encoders, trainer.test_dataloader, args.dataset)
-    inter_cluster_distance(encoders, trainer.test_dataloader, args.dataset)
-
     if args.view:
         trainer.plot_contrastive_losses()
         trainer.plot_latent_spaces()

@@ -31,7 +31,7 @@ single_variable_prototypes:
   epochs: 300
   l1: 1.0
   l2: 1.0
-  l3: 1.0
+  l3: 10.0
   l4: 1.0
   d_min: 1.0
   save_dir: models/basicmotions/single_variable_prototypes/
@@ -43,8 +43,8 @@ multivariable_prototypes:
   gamma: 0.999
   epochs: 1000
   l1: 1.0
-  l2: 1.0
-  l3: 10.0
-  l4: 10.0
+  l2: 0.1
+  l3: 0.1
+  l4: 0.1
   d_min: 2.5
   save_dir: models/basicmotions/multivariable_prototypes/
