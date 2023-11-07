@@ -14,6 +14,13 @@ def get_config_from_dataset(dataset):
 
     return config
 
+def get_comparison_config_from_dataset(comparison, dataset):
+    config_path = "configs/" + comparison + "/" + dataset + "/config.yaml"
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+
+    return config
+
 def get_train_path_from_dataset(dataset):
     return "data/" + dataset + "/processed/train.ts"
 
@@ -76,3 +83,17 @@ def get_class_to_pattern_map():
             for k in range(4):
                 class_to_pattern_map.append([i, j, k])
     return torch.Tensor(class_to_pattern_map)
+
+def get_patterns_from_labels(labels):
+    class_to_pattern_map = get_class_to_pattern_map()
+    patterns = []
+    for label in labels:
+        patterns.append(class_to_pattern_map[label])
+    return patterns
+
+def get_single_variable_patterns_from_labels(labels, var):
+    class_to_pattern_map = get_class_to_pattern_map()
+    patterns = []
+    for label in labels:
+        patterns.append(class_to_pattern_map[label][var])
+    return patterns
