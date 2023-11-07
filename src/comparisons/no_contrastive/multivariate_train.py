@@ -71,6 +71,8 @@ def main(args):
         d_min=multi_config['d_min']
     ).to(device)
 
+    mtrainer.train()
+
     mtrainer.evaluate()
     mtrainer.evaluate(use_test=True)
 
