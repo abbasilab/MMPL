@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from src.data.data import get_ds
+from src.utils.utils import *
 
 class FrequencyDomainVariable:
     """A variable which exhibits variation in the frequency domain"""
@@ -15,10 +16,10 @@ class FrequencyDomainVariable:
         self.active_frequency = active_frequency
         self.inactive_frequency = [inactive_frequencies]
     def sample_active(self, active):
-        return np.sin((np.random.normal(4*active, 0.1)) * np.linspace(0, 2 * math.pi,100) + np.random.rand() * 2 * math.pi)
+        return np.sin((np.random.normal(active, 0.1)) * np.linspace(0, 2 * math.pi,100) + np.random.rand() * 2 * math.pi) + np.random.normal(0.0, 0.05, 100)
     def sample_inactive(self):
         current_frequency = random.choice(self.inactive_frequency)
-        return np.sin((np.random.normal(current_frequency, 0.1)) * np.linspace(0, 2 * math.pi,100) + np.random.rand() * 2 * math.pi)
+        return np.sin((np.random.normal(current_frequency, 0.1)) * np.linspace(0, 2 * math.pi,100) + np.random.rand() * 2 * math.pi) + np.random.normal(0.0, 0.05, 100)
 class ShiftVariantVariable:
     """A variable which is shift variant"""
     def __init__(self, active_shift_amount, inactive_shift_amounts):
@@ -28,33 +29,33 @@ class ShiftVariantVariable:
     def sample_active(self, active):
         pattern_type = active
         if pattern_type==0:
-            shiftone = np.random.randint(0, 10)
-            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))])
+            shiftone = np.random.randint(0, 5)
+            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0.0, 0.05, 100)
         if pattern_type == 1:
-                shiftone = np.random.randint(25, 35)
+                shiftone = np.random.randint(25, 30)
                 return np.concatenate(
-                    [np.zeros(shiftone), (0.5 + np.random.rand()) * self.g1, np.zeros(100 - (shiftone + 20))])
+                    [np.zeros(shiftone), (0.5 + np.random.rand()) * self.g1, np.zeros(100 - (shiftone + 20))]) + np.random.normal(0.0, 0.05, 100)
         if pattern_type==2:
-            shiftone = np.random.randint(50, 60)
-            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))])
+            shiftone = np.random.randint(50, 55)
+            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0.0, 0.05, 100)
         if pattern_type==3:
             shiftone = np.random.randint(75, 80)
-            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))])
+            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0.0, 0.05, 100)
     def sample_inactive(self):
         pattern_type = random.choice(self.inactive_shift_amount)
         if pattern_type==0:
-            shiftone = np.random.randint(0, 10)
-            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))])
+            shiftone = np.random.randint(0, 5)
+            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0.0, 0.05, 100)
         if pattern_type == 1:
-                shiftone = np.random.randint(25, 35)
+                shiftone = np.random.randint(25, 30)
                 return np.concatenate(
-                    [np.zeros(shiftone), (0.5 + np.random.rand()) * self.g1, np.zeros(100 - (shiftone + 20))])
+                    [np.zeros(shiftone), (0.5 + np.random.rand()) * self.g1, np.zeros(100 - (shiftone + 20))]) + np.random.normal(0.0, 0.05, 100)
         if pattern_type==2:
-            shiftone = np.random.randint(50, 60)
-            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))])
+            shiftone = np.random.randint(50, 55)
+            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0.0, 0.05, 100)
         if pattern_type==3:
             shiftone = np.random.randint(75, 80)
-            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))])
+            return np.concatenate([np.zeros(shiftone), (0.5+np.random.rand()) * self.g1, np.zeros(100-(shiftone+20))]) + np.random.normal(0.0, 0.05, 100)
 class ShiftInvariantVariable:
     def __init__(self, active, inactive):
         self.active = active
@@ -66,49 +67,49 @@ class ShiftInvariantVariable:
         if pattern_type==0:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g1, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g1,
-                            np.zeros(100 - (shiftone + 45))])
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0.0, 0.05, 100)
         if pattern_type == 1:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g1, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g2,
-                            np.zeros(100 - (shiftone + 45))])
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0.0, 0.05, 100)
 
         if pattern_type == 2:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g2, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g1,
-                            np.zeros(100 - (shiftone + 45))])
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0.0, 0.05, 100)
 
         if pattern_type == 3:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g2, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g2,
-                            np.zeros(100 - (shiftone + 45))])
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0.0, 0.05, 100)
     def sample_inactive(self):
         pattern_type = random.choice(self.inactive)
         if pattern_type==0:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g1, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g1,
-                            np.zeros(100 - (shiftone + 45))])
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0.0, 0.05, 100)
         if pattern_type == 1:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g1, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g2,
-                            np.zeros(100 - (shiftone + 45))])
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0.0, 0.05, 100)
 
         if pattern_type == 2:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g2, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g1,
-                            np.zeros(100 - (shiftone + 45))])
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0.0, 0.05, 100)
 
         if pattern_type == 3:
             shiftone = np.random.randint(0, 55)
             return np.concatenate([np.zeros(shiftone), (1 + np.random.normal(0,0.05)) * self.g2, np.zeros(5), (1 + np.random.normal(0,0.05)) * self.g2,
-                            np.zeros(100 - (shiftone + 45))])
+                            np.zeros(100 - (shiftone + 45))]) + np.random.normal(0.0, 0.05, 100)
 
 class IrrelevantVariable:
     def __init__(self):
         pass
     def sample_active(self, active):
-        return 1 + np.random.normal(0, 0.05, 100)
+        return np.random.normal(0, 0.05, 100)
     def sample_inactive(self):
-        return 1 + np.random.normal(0, 0.05, 100)
+        return np.random.normal(0, 0.05, 100)
 
 class DataMiningSimulatedDataset:
     """Simulated dataset where there are few relevant variables per class """
@@ -191,6 +192,27 @@ if __name__ == "__main__":
     generate("data/simulated_640/processed/train.ts", 10)
     generate("data/simulated_640/processed/val.ts", 10)
     generate("data/simulated_640/processed/test.ts", 10)
+
+    config = get_config_from_dataset("simulated_640")
+    train_ds = get_ds(get_train_path_from_dataset("simulated_640"), config['class_to_index'])
+    dl = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False)
+    for data_matrix, labels in dl:
+        patterns = get_patterns_from_labels(labels)
+        index = random.randint(0, 640)
+        point = data_matrix[index]
+        pattern = patterns[index]
+        print(pattern)
+        fig = plt.figure(figsize=(15, 5))  # Width, Height in inches
+        ax1 = fig.add_subplot(1, 3, 1)  # 1 row, 3 columns, 1st subplot
+        ax1.plot(point[:, 0].detach().numpy())
+        ax1.set_title('Shift Invariant')
+        ax2 = fig.add_subplot(1, 3, 2)  # 1 row, 3 columns, 2nd subplot
+        ax2.plot(point[:, 1].detach().numpy())
+        ax2.set_title('Shift Variant')
+        ax3 = fig.add_subplot(1, 3, 3)  # 1 row, 3 columns, 3rd subplot
+        ax3.plot(point[:, 2].detach().numpy())
+        ax3.set_title('Frequency')
+        plt.show()
 
     generate("data/simulated_6400/processed/train.ts", 100)
     generate("data/simulated_6400/processed/val.ts", 100)
