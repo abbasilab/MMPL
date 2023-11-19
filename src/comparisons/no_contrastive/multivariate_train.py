@@ -74,7 +74,8 @@ def main(args):
     mtrainer.train()
 
     mtrainer.evaluate()
-    mtrainer.evaluate(use_test=True)
+    if args.dataset == "simulated_6400":
+        mtrainer.evaluate(use_test=True)
 
     if args.view:
         mtrainer.plot_classification_loss()
