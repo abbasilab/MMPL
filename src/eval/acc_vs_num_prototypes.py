@@ -10,7 +10,7 @@ from src.models.single_variable_prototypes import SingleVariablePrototypesWrappe
 from src.train.single_variable_prototypes.trainer import SingleVariablePrototypesTrainer
 from src.models.multivariable_prototypes import MultivariableModule
 from src.train.multivariable_prototypes.trainer import MultivariableModuleTrainer
-from src.utils.utils import get_config_from_dataset, get_train_path_from_dataset, get_test_path_from_dataset
+from src.utils.utils import *
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -21,7 +21,8 @@ def main(args):
     multivariable_config = config['multivariable_prototypes']
 
     accuracies = []
-    for _ in tqdm(range(args.resamples)):
+    num_sv_prototypes = list(range(2, 11))
+    for num_proto in num_sv_prototypes:
         encoders = []
         for i in range(config['num_variables']):
             encoders.append(Encoder(
@@ -49,7 +50,7 @@ def main(args):
             encoders=encoders,
             num_variables=config['num_variables'],
             num_classes=config['num_classes'],
-            num_prototypes=single_variable_prototypes_config['num_prototypes'],
+            num_prototypes=num_proto,
             latent_dim=encoding_config['latent_dim'],
             num_layers=single_variable_prototypes_config['num_layers']
         ).to(device)
@@ -61,7 +62,7 @@ def main(args):
             test_ds=get_ds(get_test_path_from_dataset(args.dataset, train=False), config['class_to_index']),
             classes=config['classes'],
             num_variables=config['num_variables'],
-            num_prototypes=single_variable_prototypes_config['num_prototypes'],
+            num_prototypes=num_proto,
             num_layers=single_variable_prototypes_config['num_layers'],
             batch_size=single_variable_prototypes_config['batch_size'],
             lr=single_variable_prototypes_config['lr'],
@@ -81,7 +82,7 @@ def main(args):
             wrapper=wrapper,
             num_classes=config['num_classes'],
             num_variables=config['num_variables'],
-            num_sv_prototypes=single_variable_prototypes_config['num_prototypes'],
+            num_sv_prototypes=num_proto,
             num_layers=multivariable_config['num_layers']
         ).to(device)
 
@@ -106,16 +107,22 @@ def main(args):
 
         trainer.train()
 
-        accuracy = trainer.evaluate(use_test=True)
+        if args.dataset == "simulated_6400":
+            accuracy = trainer.evaluate(use_test=True)
+        else:
+            accuracy = trainer.evaluate()
         accuracies.append(accuracy)
+
+        print(f"Number of Single Variable Prototypes: {num_proto}\n Accuracy: {accuracy}")
     
     accuracies = torch.Tensor(accuracies)
+    torch.save(accuracies, f"models/{args.dataset}/accuracies_vs_num_prototypes/accuracies.pth")
+    torch.save(torch.Tensor(num_sv_prototypes, f"models/{args.dataset}/accuracies_vs_num_prototypes/num_protos.pth"))
     print(accuracies.mean(), accuracies.std())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
-    parser.add_argument("--resamples", type=int, help="Number of resamples")
 
     args = parser.parse_args()
     main(args)
