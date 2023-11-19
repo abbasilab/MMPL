@@ -116,12 +116,16 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             num_prototypes = prototypes.size(0)
             penalty = 0.0
 
-            for j in range(num_prototypes):
+            for j in range(num_prototypes - 1):
+                min_dist = torch.tensor(float("inf"))
                 for k in range(j + 1, num_prototypes):
                     distance = torch.norm(prototypes[j] - prototypes[k])
-                    term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
-                    penalty += term
+                    min_dist = min(min_dist, distance)
+                penalty += min_dist
 
+            penalty = penalty / num_prototypes
+            penalty = torch.log(penalty)
+            penalty = torch.pow(penalty, -1)
             total_penalty += penalty
         return total_penalty
     

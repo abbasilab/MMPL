@@ -53,6 +53,8 @@ def main(args):
     trainer.train()
 
     trainer.evaluate()
+    if args.dataset == "simulated_6400":
+        trainer.evaluate(use_test=True)
 
     if args.save:
         trainer.save(multivariable_config['save_dir'])
