@@ -31,9 +31,9 @@ single_variable_prototypes:
   gamma: 0.999
   epochs: 1000
   l1: 1.0
-  l2: 10.0
+  l2: 1.0
   l3: 1.0
-  l4: 1.0
+  l4: 10.0
   d_min: 1.0
   save_dir: models//charactertrajectories_filtered/single_variable_prototypes/
 
@@ -42,7 +42,7 @@ multivariable_prototypes:
   batch_size: 275
   lr: 0.01
   gamma: 0.999
-  epochs: 1500
+  epochs: 2500
   l1: 1.0
   l2: 1.0
   l3: 1.0
