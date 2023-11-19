@@ -110,24 +110,38 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         """
         Penalizes prototypes for being close together.
         """
-        total_penalty = 0
+        # total_penalty = 0
+        # for i in range(self.num_variables):
+        #     prototypes = self.wrapper.single_variable_prototype_modules[i].prototypes
+        #     num_prototypes = prototypes.size(0)
+        #     penalty = 0.0
+
+        #     for j in range(num_prototypes - 1):
+        #         min_dist = torch.tensor(float("inf"))
+        #         for k in range(j + 1, num_prototypes):
+        #             distance = torch.norm(prototypes[j] - prototypes[k])
+        #             min_dist = min(min_dist, distance)
+        #         penalty += min_dist
+
+        #     penalty = penalty / num_prototypes
+        #     penalty = torch.log(penalty)
+        #     penalty = torch.pow(penalty, -1)
+        #     total_penalty += penalty
+        # return total_penalty
+        total_penalty = 0.0
         for i in range(self.num_variables):
             prototypes = self.wrapper.single_variable_prototype_modules[i].prototypes
             num_prototypes = prototypes.size(0)
             penalty = 0.0
 
-            for j in range(num_prototypes - 1):
-                min_dist = torch.tensor(float("inf"))
-                for k in range(j + 1, num_prototypes):
+            for j in range(num_prototypes):
+                for k in range(j+1, num_prototypes):
                     distance = torch.norm(prototypes[j] - prototypes[k])
-                    min_dist = min(min_dist, distance)
-                penalty += min_dist
-
-            penalty = penalty / num_prototypes
-            penalty = torch.log(penalty)
-            penalty = torch.pow(penalty, -1)
+                    term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
+                    penalty += term
             total_penalty += penalty
         return total_penalty
+
     
     def prototype_similarity_penalty(self, data):
         """
