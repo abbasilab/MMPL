@@ -95,17 +95,6 @@ class MultivariableModuleTrainer(torch.nn.Module):
         """
         Penalizes prototypes for being close together.
         """
-        # total_penalty = 0
-        # prototypes = self.multivariable_prototypes.prototypes
-        # num_prototypes = prototypes.size(0)
-
-        # for j in range(num_prototypes):
-        #     for k in range(j + 1, num_prototypes):
-        #         distance = torch.norm(prototypes[j] - prototypes[k])
-        #         term = torch.pow(torch.max(torch.tensor(0.0), self.d_min - distance), 2)
-        #         total_penalty += term
-
-        # return total_penalty
         prototypes = self.multivariable_prototypes.prototypes
         num_prototypes = prototypes.size(0)
 
