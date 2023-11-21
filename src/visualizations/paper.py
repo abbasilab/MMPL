@@ -114,7 +114,37 @@ def epilepsy_single_variable_prototypes(save=False):
         plt.show()
 
 def epilepsy_multivariable_prototypes(save=False):
-    return
+    plt.figure()
+    
+    sorted_prototypes = torch.zeros_like(epilepsy_mv_module.prototypes)
+    for var in range(epilepsy_mv_module.num_variables):
+        start_idx = var*epilepsy_mv_module.num_sv_prototypes
+        end_idx = (var+1)*epilepsy_mv_module.num_sv_prototypes
+        blocks = epilepsy_mv_module.prototypes[:, start_idx:end_idx]
+        max_indices = blocks.argmax(dim=1)
+        sorted_indices = max_indices.argsort()
+        sorted_blocks = blocks[sorted_indices]
+        sorted_prototypes[:, start_idx:end_idx] = sorted_blocks
+
+    ax = sns.heatmap(sorted_prototypes.cpu().detach().numpy())
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    min_val = round(sorted_prototypes.min().item(), 2)
+    max_val = round(sorted_prototypes.max().item(), 2)
+    mid_val = round((min_val + max_val) / 2, 2)
+
+    # Set the colorbar ticks and labels
+    cbar = ax.collections[0].colorbar
+    cbar.set_ticks([min_val, mid_val, max_val])
+
+    if save:
+        save_name = "visualizations/paper/epilepsy_mv.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def epilepsy_projections(save=False):
     return
@@ -162,7 +192,37 @@ def charactertrajectories_filtered_single_variable_prototypes(save=False):
         plt.show()
 
 def charactertrajectories_filtered_multivariable_prototypes(save=False):
-    return
+    plt.figure()
+    
+    sorted_prototypes = torch.zeros_like(charactertrajectories_filtered_mv_module.prototypes)
+    for var in range(charactertrajectories_filtered_mv_module.num_variables):
+        start_idx = var*charactertrajectories_filtered_mv_module.num_sv_prototypes
+        end_idx = (var+1)*charactertrajectories_filtered_mv_module.num_sv_prototypes
+        blocks = charactertrajectories_filtered_mv_module.prototypes[:, start_idx:end_idx]
+        max_indices = blocks.argmax(dim=1)
+        sorted_indices = max_indices.argsort()
+        sorted_blocks = blocks[sorted_indices]
+        sorted_prototypes[:, start_idx:end_idx] = sorted_blocks
+
+    ax = sns.heatmap(sorted_prototypes.cpu().detach().numpy())
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    min_val = round(sorted_prototypes.min().item(), 2)
+    max_val = round(sorted_prototypes.max().item(), 2)
+    mid_val = round((min_val + max_val) / 2, 2)
+
+    # Set the colorbar ticks and labels
+    cbar = ax.collections[0].colorbar
+    cbar.set_ticks([min_val, mid_val, max_val])
+
+    if save:
+        save_name = "visualizations/paper/charactertrajectories_filtered_mv.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def charactertrajectories_filtered_projected(save=False):
     # Show actual characters
@@ -218,7 +278,37 @@ def basicmotions_single_variable_prototypes(save=False):
         plt.show()
 
 def basicmotions_multivariable_prototypes(save=False):
-    return
+    plt.figure()
+    
+    sorted_prototypes = torch.zeros_like(basicmotions_mv_module.prototypes)
+    for var in range(basicmotions_mv_module.num_variables):
+        start_idx = var*basicmotions_mv_module.num_sv_prototypes
+        end_idx = (var+1)*basicmotions_mv_module.num_sv_prototypes
+        blocks = basicmotions_mv_module.prototypes[:, start_idx:end_idx]
+        max_indices = blocks.argmax(dim=1)
+        sorted_indices = max_indices.argsort()
+        sorted_blocks = blocks[sorted_indices]
+        sorted_prototypes[:, start_idx:end_idx] = sorted_blocks
+
+    ax = sns.heatmap(sorted_prototypes.cpu().detach().numpy())
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    min_val = round(sorted_prototypes.min().item(), 2)
+    max_val = round(sorted_prototypes.max().item(), 2)
+    mid_val = round((min_val + max_val) / 2, 2)
+
+    # Set the colorbar ticks and labels
+    cbar = ax.collections[0].colorbar
+    cbar.set_ticks([min_val, mid_val, max_val])
+
+    if save:
+        save_name = "visualizations/paper/basicmotions_mv.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def basicmotions_projection(save=False):
     return
@@ -228,4 +318,4 @@ if __name__ == "__main__":
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    basicmotions_single_variable_prototypes(save=args.save)
+    basicmotions_multivariable_prototypes(save=args.save)
