@@ -1,12 +1,12 @@
 import argparse
 
-from src.comparisons.ming.model import AutoencoderPrototypeModel
-from src.comparisons.ming.trainer import Trainer
+from src.comparisons.one_stage.model import AutoencoderPrototypeModel
+from src.comparisons.one_stage.trainer import Trainer
 from src.data.data import get_ds
 from src.utils.utils import *
 
 def main(args):
-    config = get_comparison_config_from_dataset("ming", args.dataset)
+    config = get_comparison_config_from_dataset("one_stage", args.dataset)
     one_stage_config = config['one_stage']
 
     model = AutoencoderPrototypeModel(

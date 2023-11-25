@@ -40,18 +40,30 @@ charactertrajectories_filtered_mv_module = load_multivariable_prototypes(charact
 
 simulated_config = get_config_from_dataset("simulated_6400")
 simulated_train_ds = get_ds(get_train_path_from_dataset("simulated_6400"), simulated_config['class_to_index'])
-simulated_test_ds = get_ds(get_test_path_from_dataset("simulated_6400"), simulated_config['class_to_index'])
+simulated_test_ds = get_ds(get_test_path_from_dataset("simulated_6400", train=False), simulated_config['class_to_index'])
 simulated_train_dl = torch.utils.data.DataLoader(simulated_train_ds, len(simulated_train_ds), shuffle=True)
 simulated_test_dl = torch.utils.data.DataLoader(simulated_test_ds, len(simulated_test_ds), shuffle=True)
 simulated_encoders = load_encoders(simulated_config)
 simulated_sv_prototype_modules = load_single_variable_prototypes_wrapper(simulated_config)
 simulated_mv_module = load_multivariable_prototypes(simulated_config)
 
+one_stage_config = get_comparison_config_from_dataset("one_stage", "simulated_640")
+one_stage_train_ds = get_ds(get_train_path_from_dataset("simulated_640"), one_stage_config['class_to_index'])
+one_stage_test_ds = get_ds(get_test_path_from_dataset("simulated_640", train=False), one_stage_config['class_to_index'])
+one_stage_train_dl = torch.utils.data.DataLoader(one_stage_train_ds, len(one_stage_train_ds), shuffle=True)
+one_stage_test_dl = torch.utils.data.DataLoader(one_stage_test_ds, len(one_stage_test_ds), shuffle=True)
+one_stage_model = load_one_stage_model(one_stage_config)
+
 tab10 = plt.cm.get_cmap("tab10")
 all_colors = list(tab10.colors)
 
 dark2 = plt.cm.get_cmap("Dark2")
 other_colors = list(dark2.colors)
+
+tab20 = plt.cm.get_cmap('tab20', 20)
+tab20b = plt.cm.get_cmap('tab20b', 20)
+tab20c = plt.cm.get_cmap('tab20c', 20)
+sixty_colors = list(tab20.colors) + list(tab20b.colors) + list(tab20c.colors)
 
 plt.rcParams['font.family'] = 'Arial'
 
@@ -240,7 +252,51 @@ def simulated_silhouette_score_vs_number_of_clusters(save=False):
     plt.show()
 
 def simulated_one_stage(save=False):
-    return
+    for data_matrix, labels in one_stage_train_dl:
+        data_matrix, labels = data_matrix.to(device), labels.to(device)
+        plt.figure()
+        with torch.no_grad():
+            _, _, embeddings = one_stage_model(data_matrix.float())
+            reducer = umap.UMAP()
+            embeddings_2d = reducer.fit_transform(embeddings.cpu())
+
+            string_labels = np.array([one_stage_config['classes'][label.item()] for label in labels])
+            handles, lbls = [], []
+            for label in one_stage_config['classes']:
+                idx = np.where(string_labels == label)[0]
+                scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label,
+                                       c=sixty_colors[int(label) % 60])
+                handles.append(scatter)
+                lbls.append(label)
+                
+            plt.title("Latent Space")
+            plt.show()
+
+def simulated_one_stage_one_pattern(save=False):
+    class_to_pattern_map = get_class_to_pattern_map()
+    for data_matrix, labels in one_stage_train_dl:
+        data_matrix, labels = data_matrix.to(device), labels.to(device)
+        plt.figure()
+        with torch.no_grad():
+            _, _, embeddings = one_stage_model(data_matrix.float())
+            reducer = umap.UMAP()
+            embeddings_2d = reducer.fit_transform(embeddings.cpu())
+            e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
+            embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
+
+            string_labels = np.array([one_stage_config['classes'][label.item()] for label in labels])
+            handles, lbls = [], []
+            for label in one_stage_config['classes']:
+                pattern = class_to_pattern_map[int(label)]
+                sv_pattern = int(pattern[0])
+                idx = np.where(string_labels == label)[0]
+                scatter = plt.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=label,
+                                       c=all_colors[sv_pattern], alpha=0.5)
+                handles.append(scatter)
+                lbls.append(label)
+                
+            plt.title("Latent Space")
+            plt.show()
 
 def epilepsy_single_variable_prototypes(save=False):
     with torch.no_grad():
@@ -653,4 +709,4 @@ if __name__ == "__main__":
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    epilepsy_projected(save=args.save)
+    simulated_one_stage_one_pattern(save=args.save)

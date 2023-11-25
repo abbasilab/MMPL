@@ -150,4 +150,4 @@ one_stage:
   l3: 0.05
   l4: 0.05
   d_min: 1.0
-  save_dir: models/comparisons/ming/simulated_640/
+  save_dir: models/comparisons/one_stage/simulated_640/

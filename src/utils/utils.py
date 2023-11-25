@@ -1,6 +1,7 @@
 import torch
 import yaml
 
+from src.comparisons.one_stage.model import AutoencoderPrototypeModel
 from src.models.encoding import Encoder
 from src.models.single_variable_prototypes import SingleVariablePrototypesWrapper
 from src.models.multivariable_prototypes import MultivariableModule
@@ -75,6 +76,21 @@ def load_multivariable_prototypes(config):
     save_name = multivariable_config['save_dir'] + "multivariable_prototypes.pth"
     multivariable_prototypes.load_state_dict(torch.load(save_name, map_location=device))
     return multivariable_prototypes
+
+def load_one_stage_model(config):
+    one_stage_config = config['one_stage']
+    model = AutoencoderPrototypeModel(
+        input_dim=one_stage_config['input_dim'],
+        hidden_dim=one_stage_config['hidden_dim'],
+        latent_dim=one_stage_config['latent_dim'],
+        num_prototypes=one_stage_config['num_prototypes'],
+        seq_len=one_stage_config['seq_len'],
+        num_classes=one_stage_config['num_classes'],
+        num_layers=one_stage_config['num_layers']
+    )
+    save_name = one_stage_config['save_dir'] + "model.pth"
+    model.load_state_dict(torch.load(save_name, map_location=device))
+    return model
 
 def get_class_to_pattern_map():
     class_to_pattern_map = []
