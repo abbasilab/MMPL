@@ -143,8 +143,59 @@ def simulated_multivariable_prototypes(save):
         plt.savefig(save_name, dpi=300)
     plt.show()
 
-def simulated_projections(save=False):
-    return
+def simulated_projected(save): 
+    prototype_matrix = simulated_mv_module.prototypes
+    prototype_indices = [39, 27, 49, 54]
+    fig, axs = plt.subplots(4, 4, figsize=(8, 8))
+    classes_of_interest = [0, 21, 42, 63]
+    variable_names = ['Variable 1', 'Variable 2', 'Variable 3', 'Variable 4']
+
+    global_min = float('inf')
+    global_max = float('-inf')
+
+    with torch.no_grad():
+        wrapper = simulated_mv_module.wrapper
+        for i in range(len(prototype_indices)):
+            prototype = prototype_matrix[prototype_indices[i]]
+            chunks = prototype.split(wrapper.num_prototypes)
+            
+            for j, chunk in enumerate(chunks):
+                index = torch.argmax(chunk)
+                sv_prototype = wrapper.single_variable_prototype_modules[j].prototypes[index]
+
+                for data_matrix, labels in simulated_train_dl:
+                    data_matrix, labels = data_matrix.to(device), labels.to(device)
+                    single_variable_data = data_matrix[:, :, j].unsqueeze(2).float()
+                    embeddings = wrapper.single_variable_prototype_modules[j].encoder(single_variable_data)
+                    distances = torch.norm(embeddings - sv_prototype, dim=1)
+                    closest_index = torch.argmin(distances).item()
+                    closest_point = single_variable_data[closest_index].squeeze(1)
+                    ax = axs[i, j]
+
+                    ax.plot(closest_point.cpu(), c=all_colors[j])
+                    
+                    local_min = closest_point.min().item()
+                    local_max = closest_point.max().item()
+                    global_min = min(global_min, local_min)
+                    global_max = max(global_max, local_max)
+
+                    if j == 0:
+                        ax.set_ylabel(f'Class {classes_of_interest[i]}', fontsize=12)
+                    if i < len(classes_of_interest) - 1:
+                        ax.set_xticks([])
+                    if j > 0:
+                        ax.set_yticks([])
+                    if i == 0:
+                        ax.set_title(variable_names[j])
+
+        for ax in axs.flat:
+            ax.set_ylim(global_min, global_max)
+
+    fig.align_ylabels()
+    if save:
+        save_name = "visualizations/paper/simulated_projected.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def simulated_no_contrastive_single_variable_prototypes(save=False):
     return
@@ -411,4 +462,4 @@ if __name__ == "__main__":
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    charactertrajectories_filtered_multivariable_prototypes(save=args.save)
+    simulated_projected(save=args.save)
