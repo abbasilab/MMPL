@@ -54,10 +54,94 @@ def simulated_dataset_generation(save=False):
     return
 
 def simulated_single_variable_prototypes(save=False):
-    return
+    class_to_pattern_map = get_class_to_pattern_map()
+    with torch.no_grad():
+        classes = [i for i in range(64)]
+        colors = ['red', 'blue', 'green', 'orange', 'magenta']
+        variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
+        pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
 
-def simulated_multivariable_prototypes(save=False):
-    return
+        fig, axs = plt.subplots(2, 2, figsize=(7, 7), sharex=True, sharey=True)
+
+        for i in range(2):
+            for j in range(2):
+                variable = i*2 + j
+
+                ax = axs[i, j]
+                ax.set_title(variable_names[variable])
+                ax.set_xticks([])
+                ax.set_yticks([])
+
+                encoder = simulated_encoders[variable]
+                for data_matrix, labels, in simulated_test_dl:
+                    single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
+                    embeddings = encoder(single_variable_data)
+                    embeddings = torch.concat([embeddings, simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes], dim=0)
+                    labels = torch.concat([labels, len(classes)*torch.ones((simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
+                    reducer = umap.UMAP()
+                    embeddings_2d = reducer.fit_transform(embeddings.cpu())
+
+                    if variable == 3:
+                        ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')
+                    else:
+                        for k, label in enumerate(classes):
+                            idx = np.where(labels == label)[0]
+                            pattern = int(class_to_pattern_map[label][variable])
+                            ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
+
+                        idx = np.where(labels == len(classes))[0]
+                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', linewidth=1.5, s=120, c=colors[-1])
+
+        legend_names = pattern_labels + ["Prototype"]
+        handles = [plt.Line2D([0], [0], marker='o' if c != 4 else '*', color='w', label=legend_names[c],
+                       markersize=10 if c != 4 else 11, markerfacecolor=colors[c], markeredgecolor='None' if c != 4 else 'black') for c in range(5)]
+        fig.legend(handles=handles, ncol=5, loc='lower center')
+        plt.tight_layout()
+        fig.subplots_adjust(bottom=0.1)
+
+
+    if save:
+        save_name = "visualizations/paper/simulated_sv.pdf"
+        plt.savefig(save_name, dpi=300)
+
+    plt.show()
+
+def sorting_key(prototype):
+    indices = []
+    for i in range(3):
+        single_variable_prototype = prototype[i*4:(i+1)*4]
+        high_value_index = torch.argmax(single_variable_prototype).item()
+        indices.append(high_value_index)
+    return tuple(indices)
+
+def simulated_multivariable_prototypes(save):
+    plt.figure()
+    prototypes = simulated_mv_module.prototypes
+    prototypes_list = [prototypes[i, :] for i in range(prototypes.shape[0])]
+    sorted_prototypes = sorted(prototypes_list, key=sorting_key)
+    sorted_prototypes_tensor = torch.stack(sorted_prototypes)
+    ax = sns.heatmap(sorted_prototypes_tensor.cpu().detach().numpy())
+
+    for col in range(0, sorted_prototypes_tensor.shape[1], 4):
+        ax.axvline(x=col, color='white', lw=2)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    min_val = round(sorted_prototypes_tensor.min().item(), 2)
+    max_val = round(sorted_prototypes_tensor.max().item(), 2)
+    mid_val = round((min_val + max_val) / 2, 2)
+
+    # Set the colorbar ticks and labels
+    cbar = ax.collections[0].colorbar
+    cbar.set_ticks([min_val, mid_val, max_val])
+
+    if save:
+        save_name = "visualizations/paper/simulated_mv.svg"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def simulated_projections(save=False):
     return
@@ -128,6 +212,9 @@ def epilepsy_multivariable_prototypes(save=False):
 
     ax = sns.heatmap(sorted_prototypes.cpu().detach().numpy())
 
+    for col in range(0, sorted_prototypes.shape[1], 4):
+        ax.axvline(x=col, color='white', lw=2)
+
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xticklabels([])
@@ -142,7 +229,7 @@ def epilepsy_multivariable_prototypes(save=False):
     cbar.set_ticks([min_val, mid_val, max_val])
 
     if save:
-        save_name = "visualizations/paper/epilepsy_mv.pdf"
+        save_name = "visualizations/paper/epilepsy_mv.svg"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -206,6 +293,9 @@ def charactertrajectories_filtered_multivariable_prototypes(save=False):
 
     ax = sns.heatmap(sorted_prototypes.cpu().detach().numpy())
 
+    for col in range(0, sorted_prototypes.shape[1], 4):
+        ax.axvline(x=col, color='white', lw=2)
+
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xticklabels([])
@@ -220,7 +310,7 @@ def charactertrajectories_filtered_multivariable_prototypes(save=False):
     cbar.set_ticks([min_val, mid_val, max_val])
 
     if save:
-        save_name = "visualizations/paper/charactertrajectories_filtered_mv.pdf"
+        save_name = "visualizations/paper/charactertrajectories_filtered_mv.svg"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -292,6 +382,9 @@ def basicmotions_multivariable_prototypes(save=False):
 
     ax = sns.heatmap(sorted_prototypes.cpu().detach().numpy())
 
+    for col in range(0, sorted_prototypes.shape[1], 4):
+        ax.axvline(x=col, color='white', lw=2)
+
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_xticklabels([])
@@ -306,7 +399,7 @@ def basicmotions_multivariable_prototypes(save=False):
     cbar.set_ticks([min_val, mid_val, max_val])
 
     if save:
-        save_name = "visualizations/paper/basicmotions_mv.pdf"
+        save_name = "visualizations/paper/basicmotions_mv.svg"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -318,4 +411,4 @@ if __name__ == "__main__":
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    basicmotions_multivariable_prototypes(save=args.save)
+    charactertrajectories_filtered_multivariable_prototypes(save=args.save)
