@@ -3,6 +3,8 @@ import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 import torch
 import umap
 
@@ -48,6 +50,9 @@ simulated_mv_module = load_multivariable_prototypes(simulated_config)
 tab10 = plt.cm.get_cmap("tab10")
 all_colors = list(tab10.colors)
 
+dark2 = plt.cm.get_cmap("Dark2")
+other_colors = list(dark2.colors)
+
 plt.rcParams['font.family'] = 'Arial'
 
 def simulated_dataset_generation(save=False):
@@ -57,7 +62,7 @@ def simulated_single_variable_prototypes(save=False):
     class_to_pattern_map = get_class_to_pattern_map()
     with torch.no_grad():
         classes = [i for i in range(64)]
-        colors = ['red', 'blue', 'green', 'orange', 'magenta']
+        colors = all_colors[:4] + [all_colors[6]]
         variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
         pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
 
@@ -201,7 +206,38 @@ def simulated_no_contrastive_single_variable_prototypes(save=False):
     return
 
 def simulated_silhouette_score_vs_number_of_clusters(save=False):
-    return
+    variables = ["Variable 1", "Variable 1", "Variable 3", "Variable 4"]
+    with torch.no_grad():
+        for data_matrix, labels in simulated_train_dl:
+            data_matrix, labels = data_matrix.to(device), labels.to(device)
+            k_values = range(2, 11)
+            all_silhouette_scores = np.zeros((len(k_values), 4))
+            for var in range(4):
+                single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
+                encoder = simulated_encoders[var].to(device)
+                embeddings = encoder(single_variable_data)
+                embeddings = embeddings.cpu().detach().numpy()
+
+                silhouette_scores = []
+
+                for k in k_values:
+                    kmeans = KMeans(n_clusters=k, random_state=42)
+                    labels = kmeans.fit_predict(embeddings)
+                    score = silhouette_score(embeddings, labels)
+                    silhouette_scores.append(score)
+                all_silhouette_scores[:, var] = silhouette_scores
+                plt.plot(k_values, all_silhouette_scores[:, var], marker='o', label=variables[var], color=other_colors[var])
+
+    plt.title('Silhouette Score vs. Number of Clusters')
+    plt.xlabel('Number of Clusters')
+    plt.ylabel('Silhouette Score')
+    plt.xticks(k_values)
+    plt.legend()
+    
+    if save:
+        save_name = "visualizations/paper/simulated_silhouette.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def simulated_one_stage(save=False):
     return
@@ -284,8 +320,51 @@ def epilepsy_multivariable_prototypes(save=False):
         plt.savefig(save_name, dpi=300)
     plt.show()
 
-def epilepsy_projections(save=False):
-    return
+def epilepsy_projected(save=False):
+    fig, axs = plt.subplots(4, 3, figsize=(7, 7))
+    classes = ['Epilepsy', 'Walking', 'Running', 'Sawing']
+    variable_names = ["Acc (x)", "Acc (y)", "Acc (z)"]
+    global_min = float('inf')
+    global_max = float('-inf')
+    with torch.no_grad():
+        prototype_matrix = epilepsy_mv_module.prototypes
+        wrapper = epilepsy_mv_module.wrapper
+        for i in range(epilepsy_mv_module.num_classes):
+            prototype = prototype_matrix[i]
+            chunks = prototype.split(wrapper.num_prototypes)
+            for j in range(3):
+                index = torch.argmax(chunks[j])
+                sv_prototype = wrapper.single_variable_prototype_modules[j].prototypes[index]
+
+                for data_matrix, labels in epilepsy_train_dl:
+                    single_variable_data = data_matrix[:, :, j].unsqueeze(2).float()
+                    embeddings = wrapper.single_variable_prototype_modules[j].encoder(single_variable_data)
+                    distances = torch.norm(embeddings - sv_prototype, dim=1)
+                    closest_index = torch.argmin(distances).item()
+                    closest_point = single_variable_data[closest_index].squeeze(1)
+                    ax = axs[int(labels[closest_index]), j]
+                    ax.plot(closest_point, c=all_colors[int(labels[closest_index])])
+                    if j == 0:
+                        ax.set_ylabel(classes[int(labels[closest_index])])
+                    if int(labels[closest_index]) < 3:
+                        ax.set_xticks([])
+                    if j > 0:
+                        ax.set_yticks([])
+                    if int(labels[closest_index]) == 0:
+                        ax.set_title(variable_names[j])
+
+                    local_min = closest_point.min().item()
+                    local_max = closest_point.max().item()
+                    global_min = min(global_min, local_min)
+                    global_max = max(global_max, local_max)
+    for ax in axs.flat:
+        ax.set_ylim(global_min, global_max)
+    fig.align_ylabels()
+
+    if save:
+        save_name = "visualizations/paper/epilepsy_projected.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def charactertrajectories_filtered_single_variable_prototypes(save=False):
     with torch.no_grad():
@@ -366,11 +445,80 @@ def charactertrajectories_filtered_multivariable_prototypes(save=False):
     plt.show()
 
 def charactertrajectories_filtered_projected(save=False):
-    # Show actual characters
-    return
+    classes = ['b', 'd', 'p', "q"]
+    fig, axs = plt.subplots(1, 4, figsize=(8, 2))
+    with torch.no_grad():
+        prototype_matrix = charactertrajectories_filtered_mv_module.prototypes
+        wrapper = charactertrajectories_filtered_mv_module.wrapper
+        for data_matrix, labels in charactertrajectories_filtered_train_dl:
+            for i in range(charactertrajectories_filtered_mv_module.num_classes):
+                prototype = prototype_matrix[i]
+                chunks = prototype.split(wrapper.num_prototypes)
+
+                x_chunk = chunks[0]
+                x_index = torch.argmax(x_chunk)
+                x_prototype = wrapper.single_variable_prototype_modules[0].prototypes[x_index]
+                x_data = data_matrix[:, :, 0].unsqueeze(2).float()
+                x_embeddings = wrapper.single_variable_prototype_modules[0].encoder(x_data)
+                x_distances = torch.norm(x_embeddings - x_prototype, dim=1)
+                x_closest_index = torch.argmin(x_distances).item()
+                x_closest_point = x_data[x_closest_index].squeeze(1)
+
+                y_chunk = chunks[1]
+                y_index = torch.argmax(y_chunk)
+                y_prototype = wrapper.single_variable_prototype_modules[1].prototypes[y_index]
+                y_data = data_matrix[:, :, 1].unsqueeze(2).float()
+                y_embeddings = wrapper.single_variable_prototype_modules[1].encoder(y_data)
+                y_distances = torch.norm(y_embeddings - y_prototype, dim=1)
+                y_closest_index = torch.argmin(y_distances).item()
+                y_closest_point = y_data[y_closest_index].squeeze(1)
+
+
+                x_int, y_int = torch.cumsum(x_closest_point, dim=0), torch.cumsum(y_closest_point, dim=0)
+                label = int(labels[x_closest_index])
+                ax = axs[label]
+                ax.plot(x_int, y_int, c=all_colors[label])
+                ax.get_xaxis().set_visible(False)
+                ax.get_yaxis().set_visible(False)
+                ax.set_title(classes[label])
+    if save:
+        save_name = "visualizations/paper/charactertrajectories_filtered_projected.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def charactertrajectories_filtered_silhouette_score_vs_number_of_clusters(save=False):
-    return
+    variables = ["x", "y", "Pen Tip Force"]
+    with torch.no_grad():
+        for data_matrix, labels in charactertrajectories_filtered_train_dl:
+            data_matrix, labels = data_matrix.to(device), labels.to(device)
+            k_values = range(2, 11)
+            all_silhouette_scores = np.zeros((len(k_values), 3))
+            for var in range(3):
+                single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
+                encoder = charactertrajectories_filtered_encoders[var].to(device)
+                embeddings = encoder(single_variable_data)
+                embeddings = embeddings.cpu().detach().numpy()
+
+                silhouette_scores = []
+
+                for k in k_values:
+                    kmeans = KMeans(n_clusters=k, random_state=42)
+                    labels = kmeans.fit_predict(embeddings)
+                    score = silhouette_score(embeddings, labels)
+                    silhouette_scores.append(score)
+                all_silhouette_scores[:, var] = silhouette_scores
+                plt.plot(k_values, all_silhouette_scores[:, var], marker='o', label=variables[var], color=other_colors[var])
+
+    plt.title('Silhouette Score vs. Number of Clusters')
+    plt.xlabel('Number of Clusters')
+    plt.ylabel('Silhouette Score')
+    plt.xticks(k_values)
+    plt.legend()
+    
+    if save:
+        save_name = "visualizations/paper/charactertrajectories_filtered_silhouette.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def charactertrajectories_filtered_no_contrastive_single_variable_prototypes(save=False):
     return
@@ -454,12 +602,55 @@ def basicmotions_multivariable_prototypes(save=False):
         plt.savefig(save_name, dpi=300)
     plt.show()
 
-def basicmotions_projection(save=False):
-    return
+def basicmotions_projected(save=False):
+    fig, axs = plt.subplots(4, 3, figsize=(5.25, 7))
+    classes = ['Standing', 'Walking', 'Running', 'Badminton']
+    variable_names = ["Acc (x)", "Acc (y)", "Acc (z)"]
+    global_min = float('inf')
+    global_max = float('-inf')
+    with torch.no_grad():
+        prototype_matrix = basicmotions_mv_module.prototypes
+        wrapper = basicmotions_mv_module.wrapper
+        for i in range(basicmotions_mv_module.num_classes):
+            prototype = prototype_matrix[i]
+            chunks = prototype.split(wrapper.num_prototypes)
+            for j in range(3):
+                index = torch.argmax(chunks[j])
+                sv_prototype = wrapper.single_variable_prototype_modules[j].prototypes[index]
+
+                for data_matrix, labels in basicmotions_train_dl:
+                    single_variable_data = data_matrix[:, :, j].unsqueeze(2).float()
+                    embeddings = wrapper.single_variable_prototype_modules[j].encoder(single_variable_data)
+                    distances = torch.norm(embeddings - sv_prototype, dim=1)
+                    closest_index = torch.argmin(distances).item()
+                    closest_point = single_variable_data[closest_index].squeeze(1)
+                    ax = axs[int(labels[closest_index]), j]
+                    ax.plot(closest_point, c=all_colors[int(labels[closest_index])])
+                    if j == 0:
+                        ax.set_ylabel(classes[int(labels[closest_index])])
+                    if int(labels[closest_index]) < 3:
+                        ax.set_xticks([])
+                    if j > 0:
+                        ax.set_yticks([])
+                    if int(labels[closest_index]) == 0:
+                        ax.set_title(variable_names[j])
+
+                    local_min = closest_point.min().item()
+                    local_max = closest_point.max().item()
+                    global_min = min(global_min, local_min)
+                    global_max = max(global_max, local_max)
+    for ax in axs.flat:
+        ax.set_ylim(global_min, global_max)
+    fig.align_ylabels()
+
+    if save:
+        save_name = "visualizations/paper/basicmotions_projected.pdf"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    simulated_projected(save=args.save)
+    epilepsy_projected(save=args.save)
