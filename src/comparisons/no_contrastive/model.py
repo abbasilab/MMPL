@@ -88,12 +88,12 @@ class SingleVariablePrototypesWrapper2(torch.nn.Module):
         classification_output = self.linear(output)
         return output, classification_output
     
-class MultivariableModule(torch.nn.Module):
+class MultivariableModule2(torch.nn.Module):
     """
     Module that holds the multivariable prototypes
     """
     def __init__(self, wrapper, num_classes, num_variables, num_sv_prototypes, num_layers):
-        super(MultivariableModule, self).__init__()
+        super(MultivariableModule2, self).__init__()
         self.wrapper = wrapper
         self.num_classes = num_classes
         self.num_variables = num_variables

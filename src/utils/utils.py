@@ -2,6 +2,7 @@ import torch
 import yaml
 
 from src.comparisons.one_stage.model import AutoencoderPrototypeModel
+from src.comparisons.no_contrastive.model import SingleVariablePrototypesWrapper2, MultivariableModule2
 from src.models.encoding import Encoder
 from src.models.single_variable_prototypes import SingleVariablePrototypesWrapper
 from src.models.multivariable_prototypes import MultivariableModule
@@ -91,6 +92,36 @@ def load_one_stage_model(config):
     save_name = one_stage_config['save_dir'] + "model.pth"
     model.load_state_dict(torch.load(save_name, map_location=device))
     return model
+
+def load_no_contrastive_single_variable_prototypes(config):
+    single_variable_prototypes_config = config['single_variable_prototypes']
+    model = SingleVariablePrototypesWrapper2(
+        num_variables=config['num_variables'],
+        num_classes=config['num_classes'],
+        num_prototypes=single_variable_prototypes_config['num_prototypes'],
+        hidden_dim=single_variable_prototypes_config['hidden_dim'],
+        latent_dim=single_variable_prototypes_config['latent_dim'],
+        num_layers=single_variable_prototypes_config['num_layers']
+    )
+    save_name = single_variable_prototypes_config['save_dir'] + "single_variable_prototypes.pth"
+    model.load_state_dict(torch.load(save_name, map_location=device))
+    return model
+
+def load_no_contrastive_multivariable_prototypes(config):
+    single_variable_prototypes_config = config['single_variable_prototypes']
+    multivariable_config = config['multivariable_prototypes']
+    wrapper = load_no_contrastive_single_variable_prototypes(config)
+    model = MultivariableModule2(
+        wrapper=wrapper,
+        num_classes=config['num_classes'],
+        num_variables=config['num_variables'],
+        num_sv_prototypes=single_variable_prototypes_config['num_prototypes'],
+        num_layers=multivariable_config['num_layers']
+    )
+    save_name = multivariable_config['save_dir'] + "multivariable_prototypes.pth"
+    model.load_state_dict(torch.load(save_name, map_location=device))
+    return model
+
 
 def get_class_to_pattern_map():
     class_to_pattern_map = []

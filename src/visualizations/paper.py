@@ -54,6 +54,13 @@ one_stage_train_dl = torch.utils.data.DataLoader(one_stage_train_ds, len(one_sta
 one_stage_test_dl = torch.utils.data.DataLoader(one_stage_test_ds, len(one_stage_test_ds), shuffle=True)
 one_stage_model = load_one_stage_model(one_stage_config)
 
+no_contrastive_config = get_comparison_config_from_dataset("no_contrastive", "simulated_6400")
+no_contrastive_sv_prototype_modules = load_no_contrastive_single_variable_prototypes(no_contrastive_config)
+no_contrastive_encoders = []
+for module in no_contrastive_sv_prototype_modules.single_variable_prototype_modules:
+    no_contrastive_encoders.append(module.encoder)
+no_contrastive_mv_module = load_no_contrastive_multivariable_prototypes(no_contrastive_config)
+
 tab10 = plt.cm.get_cmap("tab10")
 all_colors = list(tab10.colors)
 
@@ -97,6 +104,8 @@ def simulated_single_variable_prototypes(save=False):
                     labels = torch.concat([labels, len(classes)*torch.ones((simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
                     reducer = umap.UMAP()
                     embeddings_2d = reducer.fit_transform(embeddings.cpu())
+                    e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
+                    embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
 
                     if variable == 3:
                         ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')
@@ -215,6 +224,59 @@ def simulated_projected(save):
     plt.show()
 
 def simulated_no_contrastive_single_variable_prototypes(save=False):
+    class_to_pattern_map = get_class_to_pattern_map()
+    with torch.no_grad():
+        classes = [i for i in range(64)]
+        colors = all_colors[:4] + [all_colors[6]]
+        variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
+        pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
+
+        fig, axs = plt.subplots(2, 2, figsize=(7, 7), sharex=True, sharey=True)
+
+        for i in range(2):
+            for j in range(2):
+                variable = i*2 + j
+
+                ax = axs[i, j]
+                ax.set_title(variable_names[variable])
+                ax.set_xticks([])
+                ax.set_yticks([])
+
+                encoder = no_contrastive_encoders[variable]
+                for data_matrix, labels, in simulated_test_dl:
+                    single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
+                    embeddings = encoder(single_variable_data)
+                    embeddings = torch.concat([embeddings, simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes], dim=0)
+                    labels = torch.concat([labels, len(classes)*torch.ones((simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
+                    reducer = umap.UMAP()
+                    embeddings_2d = reducer.fit_transform(embeddings.cpu())
+                    e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
+                    embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
+
+                    if variable == 3:
+                        ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')
+                    else:
+                        for k, label in enumerate(classes):
+                            idx = np.where(labels == label)[0]
+                            pattern = int(class_to_pattern_map[label][variable])
+                            ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
+
+                        idx = np.where(labels == len(classes))[0]
+                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', linewidth=1.5, s=120, c=colors[-1])
+
+        legend_names = pattern_labels + ["Prototype"]
+        handles = [plt.Line2D([0], [0], marker='o' if c != 4 else '*', color='w', label=legend_names[c],
+                       markersize=10 if c != 4 else 11, markerfacecolor=colors[c], markeredgecolor='None' if c != 4 else 'black') for c in range(5)]
+        fig.legend(handles=handles, ncol=5, loc='lower center')
+        plt.tight_layout()
+        fig.subplots_adjust(bottom=0.1)
+
+
+    if save:
+        save_name = "visualizations/paper/no_contrastive_simulated_sv.pdf"
+        plt.savefig(save_name, dpi=300)
+
+    plt.show()
     return
 
 def simulated_silhouette_score_vs_number_of_clusters(save=False):
@@ -259,6 +321,8 @@ def simulated_one_stage(save=False):
             _, _, embeddings = one_stage_model(data_matrix.float())
             reducer = umap.UMAP()
             embeddings_2d = reducer.fit_transform(embeddings.cpu())
+            e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
+            embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
 
             string_labels = np.array([one_stage_config['classes'][label.item()] for label in labels])
             handles, lbls = [], []
@@ -709,4 +773,4 @@ if __name__ == "__main__":
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    simulated_one_stage_one_pattern(save=args.save)
+    simulated_no_contrastive_single_variable_prototypes(save=args.save)
