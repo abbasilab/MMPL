@@ -1,6 +1,8 @@
 import argparse
+import math
 
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import numpy as np
 import seaborn as sns
 from sklearn.cluster import KMeans
@@ -42,6 +44,7 @@ simulated_config = get_config_from_dataset("simulated_6400")
 simulated_train_ds = get_ds(get_train_path_from_dataset("simulated_6400"), simulated_config['class_to_index'])
 simulated_test_ds = get_ds(get_test_path_from_dataset("simulated_6400", train=False), simulated_config['class_to_index'])
 simulated_train_dl = torch.utils.data.DataLoader(simulated_train_ds, len(simulated_train_ds), shuffle=True)
+simulated_train_dl_unshuffled = torch.utils.data.DataLoader(simulated_train_ds, len(simulated_train_ds), shuffle=False)
 simulated_test_dl = torch.utils.data.DataLoader(simulated_test_ds, len(simulated_test_ds), shuffle=True)
 simulated_encoders = load_encoders(simulated_config)
 simulated_sv_prototype_modules = load_single_variable_prototypes_wrapper(simulated_config)
@@ -75,7 +78,147 @@ sixty_colors = list(tab20.colors) + list(tab20b.colors) + list(tab20c.colors)
 plt.rcParams['font.family'] = 'Arial'
 
 def simulated_dataset_generation(save=False):
-    return
+    fig, axs = plt.subplots(4, 3, figsize=(8, 8))
+
+    for i in range(4):
+        for j in range(3):
+            ax = axs[i, j]
+            ax.set_ylim(-1.5, 1.5)
+            # if j == 0:
+            #     ax.set_yticks([-1, 0, 1])
+            # else:
+            #     ax.set_yticks([])
+            # if i == 3:
+            #     ax.set_xticks([0, 50, 100])
+            # else:
+            #     ax.set_xticks([])
+            ax.set_yticks([-1, 0, 1])
+
+            if i == 3:
+                ax.set_xlabel(f"Variable {j+1}", fontsize=12)
+            if j == 0:
+                ax.set_ylabel(f"Pattern {i+1}", rotation=0, fontsize=12, labelpad=25)
+    
+    # Variable 1
+    g1 = np.sin(5 * np.linspace(0, 2 * math.pi, 200))[0:20]
+    g2 = np.sin(5 * np.linspace(0, 2 * math.pi, 200))[20:40]
+
+    ax = axs[0, 0]
+    shiftone = np.random.randint(0, 55)
+    series = np.concatenate([np.zeros(shiftone), g1, np.zeros(5), g1, np.zeros(100 - (shiftone + 45))])
+    ax.plot(series, c=all_colors[0])
+
+    ax = axs[1, 0]
+    shiftone = np.random.randint(0, 55)
+    series = np.concatenate([np.zeros(shiftone), g1, np.zeros(5), g2, np.zeros(100 - (shiftone + 45))])
+    ax.plot(series, c=all_colors[0])
+
+    ax = axs[2, 0]
+    shiftone = np.random.randint(0, 55)
+    series = np.concatenate([np.zeros(shiftone), g2, np.zeros(5), g1, np.zeros(100 - (shiftone + 45))])
+    ax.plot(series, c=all_colors[0])
+
+    ax = axs[3, 0]
+    shiftone = np.random.randint(0, 55)
+    series = np.concatenate([np.zeros(shiftone), g2, np.zeros(5), g2, np.zeros(100 - (shiftone + 45))])
+    ax.plot(series, c=all_colors[0])
+
+
+    # Variable 2
+    g1 = np.sin(5 * np.linspace(0, 2 * math.pi, 200))[0:20]
+
+    ax = axs[0, 1]
+    shiftone = np.random.randint(0, 10)
+    series = np.concatenate([np.zeros(shiftone), 1.0*g1, np.zeros(100-(shiftone+20))])
+    ax.plot(series, c=all_colors[1])
+
+    ax = axs[1, 1]
+    shiftone = np.random.randint(25, 35)
+    series = np.concatenate([np.zeros(shiftone), 1.0*g1, np.zeros(100-(shiftone+20))])
+    ax.plot(series, c=all_colors[1])
+
+    ax = axs[2, 1]
+    shiftone = np.random.randint(50, 60)
+    series = np.concatenate([np.zeros(shiftone), 1.0*g1, np.zeros(100-(shiftone+20))])
+    ax.plot(series, c=all_colors[1])
+
+    ax = axs[3, 1]
+    shiftone = np.random.randint(75, 80)
+    series = np.concatenate([np.zeros(shiftone), 1.0*g1, np.zeros(100-(shiftone+20))])
+    ax.plot(series, c=all_colors[1])
+
+    # Variable 3
+    ax = axs[0, 2]
+    series = np.sin(0*np.linspace(0, 2 * math.pi,100))
+    ax.plot(series, c=all_colors[2])
+
+    ax = axs[1, 2]
+    series = np.sin(1*np.linspace(0, 2 * math.pi,100) + 2*math.pi)
+    ax.plot(series, c=all_colors[2])
+
+    ax = axs[2, 2]
+    series = np.sin(2*np.linspace(0, 2 * math.pi,100) + 2*math.pi)
+    ax.plot(series, c=all_colors[2])
+
+    ax = axs[3, 2]
+    series = np.sin(3*np.linspace(0, 2 * math.pi,100) + 2*math.pi)
+    ax.plot(series, c=all_colors[2])
+
+    if save:
+        save_name = "visualizations/paper/simulated_generation.pdf"
+        plt.savefig(save_name, dpi=300)
+
+    plt.show()
+
+def simulated_dataset_example(save=False):
+    fig = plt.figure(figsize=(8, 8))
+    gs = gridspec.GridSpec(5, 4, height_ratios=[1, 1, 0.01, 1, 1])  # Adjust the 0.1 to reduce the ellipsis row height
+    grid_shape = (5, 4)  # 5 rows (4 for data, 1 for ellipsis), 4 columns
+    display_classes = [0, 1, 62, 63]
+    row_labels = [f"Class {i+1}" for i in display_classes]
+    col_labels = [f"Variable {i+1}" for i in range(4)]
+    ellipsis_row = 2
+    with torch.no_grad():
+        for data_matrix, labels in simulated_train_dl_unshuffled:
+            axes = []
+            for i, class_idx in enumerate(display_classes):
+                row = i if i < ellipsis_row else i + 1  # Adjust row to skip ellipsis row
+                for j in range(4):
+                    ax = plt.subplot(gs[row, j])  # Use 'row' instead of 'i'
+                    ax.set_ylim(-1.5, 1.5)
+                    ax.set_yticks([-1, 0, 1])
+                    ax.set_xticks([0, 50, 100])
+                    axes.append(ax)
+                    
+                    ax.plot(data_matrix[class_idx*100, :, j], c=all_colors[j])
+                    
+                    if j == 0:
+                        ax.set_ylabel(row_labels[i])
+                    if row == grid_shape[0] - 1:
+                        ax.set_xlabel(col_labels[j])
+                    
+                    # if row < grid_shape[0] - 1:
+                    #     ax.set_xticks([])
+                    
+                    # if j > 0:
+                    #     ax.set_yticks([])
+
+            # Add vertical ellipsis in the gap
+            for i in range(0, len(axes), 4):
+                min_val = min(ax.get_ylim()[0] for ax in axes[i:i + 4])
+                max_val = max(ax.get_ylim()[1] for ax in axes[i:i + 4])
+                for ax in axes[i:i + 4]:
+                    ax.set_ylim(min_val, max_val)
+            for j in range(4):
+                ax = plt.subplot(gs[ellipsis_row, j])
+                ax.annotate('...', xy=(0.5, 0.5), xycoords='axes fraction', fontsize=20, ha='center')
+                ax.axis('off')
+            plt.tight_layout()
+            if save:
+                save_name = "visualizations/paper/simulated_example.pdf"
+                plt.savefig(save_name, dpi=300)
+            plt.show()
+
 
 def simulated_single_variable_prototypes(save=False):
     class_to_pattern_map = get_class_to_pattern_map()
@@ -246,8 +389,8 @@ def simulated_no_contrastive_single_variable_prototypes(save=False):
                 for data_matrix, labels, in simulated_test_dl:
                     single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
                     embeddings = encoder(single_variable_data)
-                    embeddings = torch.concat([embeddings, simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes], dim=0)
-                    labels = torch.concat([labels, len(classes)*torch.ones((simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
+                    embeddings = torch.concat([embeddings, no_contrastive_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes], dim=0)
+                    labels = torch.concat([labels, len(classes)*torch.ones((no_contrastive_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
                     reducer = umap.UMAP()
                     embeddings_2d = reducer.fit_transform(embeddings.cpu())
                     e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
@@ -277,7 +420,35 @@ def simulated_no_contrastive_single_variable_prototypes(save=False):
         plt.savefig(save_name, dpi=300)
 
     plt.show()
-    return
+
+def simulated_no_contrastive_multivariable_prototypes(save=False):
+    plt.figure()
+    prototypes = no_contrastive_mv_module.prototypes
+    prototypes_list = [prototypes[i, :] for i in range(prototypes.shape[0])]
+    sorted_prototypes = sorted(prototypes_list, key=sorting_key)
+    sorted_prototypes_tensor = torch.stack(sorted_prototypes)
+    ax = sns.heatmap(sorted_prototypes_tensor.cpu().detach().numpy())
+
+    for col in range(0, sorted_prototypes_tensor.shape[1], 4):
+        ax.axvline(x=col, color='white', lw=2)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    min_val = round(sorted_prototypes_tensor.min().item(), 2)
+    max_val = round(sorted_prototypes_tensor.max().item(), 2)
+    mid_val = round((min_val + max_val) / 2, 2)
+
+    # Set the colorbar ticks and labels
+    cbar = ax.collections[0].colorbar
+    cbar.set_ticks([min_val, mid_val, max_val])
+
+    if save:
+        save_name = "visualizations/paper/no_contrastive_mv.svg"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
 
 def simulated_silhouette_score_vs_number_of_clusters(save=False):
     variables = ["Variable 1", "Variable 1", "Variable 3", "Variable 4"]
@@ -773,4 +944,4 @@ if __name__ == "__main__":
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    simulated_no_contrastive_single_variable_prototypes(save=args.save)
+    simulated_dataset_generation(save=args.save)

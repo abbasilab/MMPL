@@ -1,6 +1,6 @@
 import argparse
 
-from src.comparisons.no_contrastive.model import SingleVariablePrototypesWrapper2, MultivariableModule
+from src.comparisons.no_contrastive.model import SingleVariablePrototypesWrapper2, MultivariableModule2
 from src.comparisons.no_contrastive.univariate_trainer import Trainer
 from src.comparisons.no_contrastive.multivariate_trainer import MultivariableModuleTrainer
 from src.data.data import get_ds
@@ -45,7 +45,7 @@ def main(args):
 
     multi_config = config['multivariable_prototypes']
 
-    model = MultivariableModule(
+    model = MultivariableModule2(
         wrapper=wrapper,
         num_classes=config['num_classes'],
         num_variables=config['num_variables'],

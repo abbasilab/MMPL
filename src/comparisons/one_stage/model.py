@@ -64,7 +64,7 @@ class PrototypeNetwork(torch.nn.Module):
         self.seq_len = seq_len
         self.latent_dim = latent_dim
 
-        self.prototypes = torch.nn.Parameter(torch.zeros(num_prototypes, latent_dim))
+        self.prototypes = torch.nn.Parameter(torch.rand(num_prototypes, latent_dim))
 
     def forward(self, x):
         x = torch.unsqueeze(x, 1).repeat_interleave(self.num_prototypes, 1)
