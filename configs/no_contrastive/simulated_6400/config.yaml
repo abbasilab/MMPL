@@ -136,7 +136,7 @@ num_variables: 4
 single_variable_prototypes:
   hidden_dim: 64
   latent_dim: 32
-  num_prototypes: 4
+  num_prototypes: 7
   num_layers: 1
   batch_size: 640
   lr: 0.01

@@ -62,7 +62,7 @@ no_contrastive_sv_prototype_modules = load_no_contrastive_single_variable_protot
 no_contrastive_encoders = []
 for module in no_contrastive_sv_prototype_modules.single_variable_prototype_modules:
     no_contrastive_encoders.append(module.encoder)
-no_contrastive_mv_module = load_no_contrastive_multivariable_prototypes(no_contrastive_config)
+# no_contrastive_mv_module = load_no_contrastive_multivariable_prototypes(no_contrastive_config)
 
 tab10 = plt.cm.get_cmap("tab10")
 all_colors = list(tab10.colors)
@@ -78,7 +78,7 @@ sixty_colors = list(tab20.colors) + list(tab20b.colors) + list(tab20c.colors)
 plt.rcParams['font.family'] = 'Arial'
 
 def simulated_dataset_generation(save=False):
-    fig, axs = plt.subplots(4, 3, figsize=(8, 8))
+    fig, axs = plt.subplots(4, 3, figsize=(9, 8))
 
     for i in range(4):
         for j in range(3):
@@ -95,9 +95,9 @@ def simulated_dataset_generation(save=False):
             ax.set_yticks([-1, 0, 1])
 
             if i == 3:
-                ax.set_xlabel(f"Variable {j+1}", fontsize=12)
+                ax.set_xlabel(f"Variable {j+1}", fontsize=16)
             if j == 0:
-                ax.set_ylabel(f"Pattern {i+1}", rotation=0, fontsize=12, labelpad=25)
+                ax.set_ylabel(f"Pattern {i+1}", rotation=0, fontsize=16, labelpad=30)
     
     # Variable 1
     g1 = np.sin(5 * np.linspace(0, 2 * math.pi, 200))[0:20]
@@ -164,8 +164,10 @@ def simulated_dataset_generation(save=False):
     series = np.sin(3*np.linspace(0, 2 * math.pi,100) + 2*math.pi)
     ax.plot(series, c=all_colors[2])
 
+    fig.subplots_adjust(hspace=0.5)
+
     if save:
-        save_name = "visualizations/paper/simulated_generation.pdf"
+        save_name = "visualizations/paper/simulated_generation.eps"
         plt.savefig(save_name, dpi=300)
 
     plt.show()
@@ -193,9 +195,9 @@ def simulated_dataset_example(save=False):
                     ax.plot(data_matrix[class_idx*100, :, j], c=all_colors[j])
                     
                     if j == 0:
-                        ax.set_ylabel(row_labels[i])
+                        ax.set_ylabel(row_labels[i], fontsize=16)
                     if row == grid_shape[0] - 1:
-                        ax.set_xlabel(col_labels[j])
+                        ax.set_xlabel(col_labels[j], fontsize=16)
                     
                     # if row < grid_shape[0] - 1:
                     #     ax.set_xticks([])
@@ -215,7 +217,7 @@ def simulated_dataset_example(save=False):
                 ax.axis('off')
             plt.tight_layout()
             if save:
-                save_name = "visualizations/paper/simulated_example.pdf"
+                save_name = "visualizations/paper/simulated_example.eps"
                 plt.savefig(save_name, dpi=300)
             plt.show()
 
@@ -228,14 +230,14 @@ def simulated_single_variable_prototypes(save=False):
         variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
         pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
 
-        fig, axs = plt.subplots(2, 2, figsize=(7, 7), sharex=True, sharey=True)
+        fig, axs = plt.subplots(2, 2, figsize=(8, 8), sharex=True, sharey=True)
 
         for i in range(2):
             for j in range(2):
                 variable = i*2 + j
 
                 ax = axs[i, j]
-                ax.set_title(variable_names[variable])
+                ax.set_title(variable_names[variable], fontsize=16)
                 ax.set_xticks([])
                 ax.set_yticks([])
 
@@ -259,7 +261,7 @@ def simulated_single_variable_prototypes(save=False):
                             ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
 
                         idx = np.where(labels == len(classes))[0]
-                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', linewidth=1.5, s=120, c=colors[-1])
+                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', linewidth=1.5, s=200, c=colors[-1])
 
         legend_names = pattern_labels + ["Prototype"]
         handles = [plt.Line2D([0], [0], marker='o' if c != 4 else '*', color='w', label=legend_names[c],
@@ -270,7 +272,7 @@ def simulated_single_variable_prototypes(save=False):
 
 
     if save:
-        save_name = "visualizations/paper/simulated_sv.pdf"
+        save_name = "visualizations/paper/simulated_sv.eps"
         plt.savefig(save_name, dpi=300)
 
     plt.show()
@@ -343,26 +345,28 @@ def simulated_projected(save):
 
                     ax.plot(closest_point.cpu(), c=all_colors[j])
                     
-                    local_min = closest_point.min().item()
-                    local_max = closest_point.max().item()
-                    global_min = min(global_min, local_min)
-                    global_max = max(global_max, local_max)
+                    # local_min = closest_point.min().item()
+                    # local_max = closest_point.max().item()
+                    # global_min = min(global_min, local_min)
+                    # global_max = max(global_max, local_max)
+                    ax.set_ylim(-1.5, 1.5)
 
                     if j == 0:
-                        ax.set_ylabel(f'Class {classes_of_interest[i]}', fontsize=12)
-                    if i < len(classes_of_interest) - 1:
-                        ax.set_xticks([])
-                    if j > 0:
-                        ax.set_yticks([])
-                    if i == 0:
-                        ax.set_title(variable_names[j])
+                        ax.set_ylabel(f'Class {classes_of_interest[i]}', fontsize=16)
+                    # if i < len(classes_of_interest) - 1:
+                    #     ax.set_xticks([])
+                    # if j > 0:
+                    #     ax.set_yticks([])
+                    if i == 3:
+                        ax.set_xlabel(variable_names[j], fontsize=16)
 
-        for ax in axs.flat:
-            ax.set_ylim(global_min, global_max)
+        # for ax in axs.flat:
+        #     ax.set_ylim(global_min, global_max)
 
+    plt.tight_layout()
     fig.align_ylabels()
     if save:
-        save_name = "visualizations/paper/simulated_projected.pdf"
+        save_name = "visualizations/paper/simulated_projected.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -416,7 +420,7 @@ def simulated_no_contrastive_single_variable_prototypes(save=False):
 
 
     if save:
-        save_name = "visualizations/paper/no_contrastive_simulated_sv.pdf"
+        save_name = "visualizations/paper/no_contrastive_simulated_sv.eps"
         plt.savefig(save_name, dpi=300)
 
     plt.show()
@@ -446,7 +450,7 @@ def simulated_no_contrastive_multivariable_prototypes(save=False):
     cbar.set_ticks([min_val, mid_val, max_val])
 
     if save:
-        save_name = "visualizations/paper/no_contrastive_mv.svg"
+        save_name = "visualizations/paper/no_contrastive_mv.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -473,14 +477,27 @@ def simulated_silhouette_score_vs_number_of_clusters(save=False):
                 all_silhouette_scores[:, var] = silhouette_scores
                 plt.plot(k_values, all_silhouette_scores[:, var], marker='o', label=variables[var], color=other_colors[var])
 
-    plt.title('Silhouette Score vs. Number of Clusters')
-    plt.xlabel('Number of Clusters')
-    plt.ylabel('Silhouette Score')
-    plt.xticks(k_values)
+    plt.xlabel('Number of Clusters', fontsize=16)
+    plt.ylabel('Silhouette Score', fontsize=16)
+    plt.xticks(k_values, fontsize=12)
+    plt.yticks(fontsize=12)
     plt.legend()
     
     if save:
-        save_name = "visualizations/paper/simulated_silhouette.pdf"
+        save_name = "visualizations/paper/simulated_silhouette.eps"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
+
+def simulated_accuracy_vs_number_of_clusters(save=False):
+    num_protos = range(2, 11)
+    accuracies = [0.96953125, 0.99296875, 0.9984375, 0.99875, 0.9990625, 0.99828125, 0.99515625, 0.99765625, 0.9928125]
+    plt.plot(num_protos, accuracies, c="black")
+    plt.xlabel("Number of Univariate Prototypes", fontsize=16)
+    plt.ylabel("Classification Accuracy", fontsize=16)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    if save:
+        save_name = "visualizations/paper/simulated_accuracy.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -572,7 +589,7 @@ def epilepsy_single_variable_prototypes(save=False):
         fig.subplots_adjust(bottom=0.1)
 
         if save:
-            plt.savefig("visualizations/paper/epilepsy_sv.pdf", dpi=300)
+            plt.savefig("visualizations/paper/epilepsy_sv.eps", dpi=300)
         plt.show()
 
 def epilepsy_multivariable_prototypes(save=False):
@@ -607,7 +624,7 @@ def epilepsy_multivariable_prototypes(save=False):
     cbar.set_ticks([min_val, mid_val, max_val])
 
     if save:
-        save_name = "visualizations/paper/epilepsy_mv.svg"
+        save_name = "visualizations/paper/epilepsy_mv.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -653,7 +670,7 @@ def epilepsy_projected(save=False):
     fig.align_ylabels()
 
     if save:
-        save_name = "visualizations/paper/epilepsy_projected.pdf"
+        save_name = "visualizations/paper/epilepsy_projected.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -696,7 +713,7 @@ def charactertrajectories_filtered_single_variable_prototypes(save=False):
         fig.subplots_adjust(bottom=0.1)
 
         if save:
-            plt.savefig("visualizations/paper/charactertrajectories_filtered_sv.pdf", dpi=300)
+            plt.savefig("visualizations/paper/charactertrajectories_filtered_sv.eps", dpi=300)
         plt.show()
 
 def charactertrajectories_filtered_multivariable_prototypes(save=False):
@@ -773,7 +790,7 @@ def charactertrajectories_filtered_projected(save=False):
                 ax.get_yaxis().set_visible(False)
                 ax.set_title(classes[label])
     if save:
-        save_name = "visualizations/paper/charactertrajectories_filtered_projected.pdf"
+        save_name = "visualizations/paper/charactertrajectories_filtered_projected.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -800,14 +817,26 @@ def charactertrajectories_filtered_silhouette_score_vs_number_of_clusters(save=F
                 all_silhouette_scores[:, var] = silhouette_scores
                 plt.plot(k_values, all_silhouette_scores[:, var], marker='o', label=variables[var], color=other_colors[var])
 
-    plt.title('Silhouette Score vs. Number of Clusters')
-    plt.xlabel('Number of Clusters')
-    plt.ylabel('Silhouette Score')
+    plt.xlabel('Number of Clusters', fontsize=16)
+    plt.ylabel('Silhouette Score', fontsize=16)
     plt.xticks(k_values)
     plt.legend()
     
     if save:
-        save_name = "visualizations/paper/charactertrajectories_filtered_silhouette.pdf"
+        save_name = "visualizations/paper/charactertrajectories_filtered_silhouette.eps"
+        plt.savefig(save_name, dpi=300)
+    plt.show()
+
+def charactertrajectories_filtered_accuracy_vs_number_of_clusters(save=False):
+    num_protos = range(2, 11)
+    accuracies = [0.7636363636363637, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    plt.plot(num_protos, accuracies, c="black")
+    plt.xlabel("Number of Univariate Prototypes", fontsize=16)
+    plt.ylabel("Classification Accuracy", fontsize=16)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    if save:
+        save_name = "visualizations/paper/charactertrajectories_filtered_accuracy.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -854,7 +883,7 @@ def basicmotions_single_variable_prototypes(save=False):
         fig.subplots_adjust(bottom=0.05)
 
         if save:
-            plt.savefig("visualizations/paper/basicmotions_sv.pdf", dpi=300)
+            plt.savefig("visualizations/paper/basicmotions_sv.eps", dpi=300)
         plt.show()
 
 def basicmotions_multivariable_prototypes(save=False):
@@ -889,7 +918,7 @@ def basicmotions_multivariable_prototypes(save=False):
     cbar.set_ticks([min_val, mid_val, max_val])
 
     if save:
-        save_name = "visualizations/paper/basicmotions_mv.svg"
+        save_name = "visualizations/paper/basicmotions_mv.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -935,7 +964,7 @@ def basicmotions_projected(save=False):
     fig.align_ylabels()
 
     if save:
-        save_name = "visualizations/paper/basicmotions_projected.pdf"
+        save_name = "visualizations/paper/basicmotions_projected.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -944,4 +973,4 @@ if __name__ == "__main__":
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    simulated_dataset_generation(save=args.save)
+    basicmotions_projected(save=args.save)
