@@ -1,0 +1,104 @@
+num_classes: 20
+classes:
+  - a
+  - b
+  - c
+  - d
+  - e
+  - g
+  - h
+  - l
+  - m
+  - 'n'
+  - o
+  - p
+  - q
+  - r
+  - s
+  - u
+  - v
+  - w
+  - 'y'
+  - z
+class_to_index:
+  '1': 1
+  '2': 2
+  '3': 3
+  '4': 4
+  '5': 5
+  '6': 6
+  '7': 7
+  '8': 8
+  '9': 9
+  '10': 10
+  '11': 11
+  '12': 12
+  '13': 13
+  '14': 14
+  '15': 15
+  '16': 16
+  '17': 17
+  '18': 18
+  '19': 19
+  '20': 20
+index_to_class:
+  a: 1
+  b: 2
+  c: 3
+  d: 4
+  e: 5
+  g: 6
+  h: 7
+  l: 8
+  m: 9
+  'n': 10
+  o: 11
+  p: 12
+  q: 13
+  r: 14
+  s: 15
+  u: 16
+  v: 17
+  w: 18
+  'y': 19
+  z: 20
+num_variables: 3
+
+encoding:
+  input_dim: 1
+  hidden_dim: 64
+  latent_dim: 32
+  batch_size: 1430
+  lr: 0.01
+  gamma: 0.999
+  epochs: 3000
+  m: 1.0
+  save_dir: models/charactertrajectories/encoding/
+
+
+single_variable_prototypes:
+  num_prototypes: 20
+  num_layers: 1
+  batch_size: 275
+  lr: 0.01
+  gamma: 0.999
+  epochs: 1000
+  l1: 1.0
+  l2: 1.0
+  l3: 1.0
+  l4: 10.0
+  d_min: 1.0
+  save_dir: models//charactertrajectories/single_variable_prototypes/
+
+multivariable_prototypes:
+  num_layers: 1
+  batch_size: 275
+  lr: 0.01
+  gamma: 0.999
+  epochs: 2500
+  l1: 1.0
+  l2: 1.0
+  l3: 1.0
+  l4: 1.0
+  d_min: 2.5
+  save_dir: models/charactertrajectories/multivariable_prototypes/

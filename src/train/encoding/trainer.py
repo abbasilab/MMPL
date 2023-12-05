@@ -80,8 +80,8 @@ class EncoderTrainer(torch.nn.Module):
 
                     reducer = umap.UMAP()
                     embeddings_2d = reducer.fit_transform(embeddings.cpu())
-
-                    string_labels = np.array([self.classes[label.item()] for label in labels])
+                    
+                    string_labels = np.array([self.classes[int(label) - 1] for label in labels])
 
                     handles, lbls = [], []
                     for label in self.classes:
