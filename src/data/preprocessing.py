@@ -86,14 +86,13 @@ def main():
     
     with open("data/charactertrajectories/processed/train_new.ts", 'w') as outfile:
         for i, line in enumerate(lines):
-            if i < 7:
+            if i < 42:
                 outfile.write(line)
             else:
                 line = line.strip()
-                data = "".join(line.split(":")[:-1])
-                label = int(line.split(":")[-1])
-                new_label = label - 1
-                new_line = data + str(new_label)
+                label = line.split(":")[-1]
+                new_label = str(int(label) - 1)
+                new_line = line[:-len(label)] + new_label
                 outfile.write(new_line)
 
     with open("data/charactertrajectories/processed/test.ts", 'r') as infile:
@@ -101,14 +100,13 @@ def main():
     
     with open("data/charactertrajectories/processed/test_new.ts", 'w') as outfile:
         for i, line in enumerate(lines):
-            if i < 7:
+            if i < 42:
                 outfile.write(line)
             else:
                 line = line.strip()
-                data = "".join(line.split(":")[:-1])
-                label = int(line.split(":")[-1])
-                new_label = label - 1
-                new_line = data + str(new_label)
+                label = line.split(":")[-1]
+                new_label = str(int(label) - 1)
+                new_line = line[:-len(label)] + new_label
                 outfile.write(new_line)
 
 
