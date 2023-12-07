@@ -130,8 +130,8 @@ def visualize_multivariable_prototypes(config, save):
     multivariable_module = load_multivariable_prototypes(config)
     sorted_prototypes = torch.zeros_like(multivariable_module.prototypes)
     for var in range(multivariable_module.num_variables):
-        start_idx = var*multivariable_module.num_sv_prototypes
-        end_idx = (var+1)*multivariable_module.num_sv_prototypes
+        start_idx = sum(multivariable_module.num_sv_prototypes[:var])
+        end_idx = sum(multivariable_module.num_sv_prototypes[:var+1])
         blocks = multivariable_module.prototypes[:, start_idx:end_idx]
         max_indices = blocks.argmax(dim=1)
         sorted_indices = max_indices.argsort()
@@ -179,9 +179,7 @@ def visualize_characters(config, train_ds, save):
     multivariable_module = load_multivariable_prototypes(config)
     multivariable_module.eval()
     train_loader = torch.utils.data.DataLoader(train_ds, len(train_ds), shuffle=False, pin_memory=True)
-    colors = ['red', 'blue', 'green', 'orange']
-    classes = ['b', 'd', 'p', "q"]
-    fig, axs = plt.subplots(1, 4, figsize=(8, 2))
+    fig, axs = plt.subplots(5, 4, figsize=(8, 10))
     with torch.no_grad():
         prototype_matrix = multivariable_module.prototypes
         wrapper = multivariable_module.wrapper
@@ -211,11 +209,15 @@ def visualize_characters(config, train_ds, save):
 
                 x_int, y_int = torch.cumsum(x_closest_point, dim=0), torch.cumsum(y_closest_point, dim=0)
                 label = int(labels[x_closest_index])
-                ax = axs[label]
-                ax.plot(x_int, y_int, c=colors[label])
+                label = config['classes'][label]
+                print(label)
+                row = i // 4
+                col = i % 4
+                ax = axs[row][col]
+                ax.plot(x_int, y_int, c=colors[i])
                 ax.get_xaxis().set_visible(False)
                 ax.get_yaxis().set_visible(False)
-                ax.set_title(classes[label])
+                ax.set_title(label)
     plt.show()
 
 
