@@ -21,7 +21,7 @@ def main(args):
     with torch.no_grad():
         for data_matrix, labels in train_dl:
             data_matrix, labels = data_matrix.to(device), labels.to(device)
-            k_values = range(2, 11)
+            k_values = range(2, 30)
             all_silhouette_scores = np.zeros((len(k_values), config['num_variables']))
             for var in range(config['num_variables']):
                 single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
@@ -40,7 +40,9 @@ def main(args):
                 plt.plot(k_values, all_silhouette_scores[:, var], marker='o', label=f"Variable {var+1}")
 
     average_silhouette_scores = np.mean(all_silhouette_scores, axis=1)
-
+    highest_scores = np.argmax(all_silhouette_scores, axis=0)
+    for i in range(len(highest_scores)):
+        print(k_values[highest_scores[i]])
     # Find the k with the highest average silhouette score
     best_k = k_values[np.argmax(average_silhouette_scores)]
 

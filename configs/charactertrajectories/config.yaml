@@ -77,7 +77,10 @@ encoding:
 
 
 single_variable_prototypes:
-  num_prototypes: 20
+  num_prototypes:
+    - 21
+    - 20
+    - 15
   num_layers: 1
   batch_size: 275
   lr: 0.01

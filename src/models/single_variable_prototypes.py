@@ -41,17 +41,23 @@ class SingleVariablePrototypesWrapper(torch.nn.Module):
 
         single_variable_prototype_modules = []
         for i in range(num_variables):
-            single_variable_prototype_modules.append(
-                SingleVariablePrototypesModule(
-                    encoder=encoders[i],
-                    num_prototypes=num_prototypes,
-                    latent_dim=latent_dim
-                )
-            )
+            if type(num_prototypes) == int:
+                single_variable_prototype_modules.append(
+                    SingleVariablePrototypesModule(
+                        encoder=encoders[i],
+                        num_prototypes=num_prototypes,
+                        latent_dim=latent_dim
+                    ))
+            else:
+                single_variable_prototype_modules.append(SingleVariablePrototypesModule(encoders[i], num_prototypes[i], latent_dim))
+
         self.single_variable_prototype_modules = torch.nn.ModuleList(single_variable_prototype_modules)
 
         if num_layers == 1:
-            self.linear = torch.nn.Linear(num_variables * num_prototypes, num_classes)
+            if type(num_prototypes) == int:
+                self.linear = torch.nn.Linear(num_variables * num_prototypes, num_classes)
+            else:
+                self.linear = torch.nn.Linear(sum(num_prototypes), num_classes)
         else:
             layers = [torch.nn.Linear(num_variables * num_prototypes, num_classes), torch.nn.ReLU()]
             for i in range(num_layers - 1):
