@@ -86,7 +86,7 @@ def main():
     
     with open("data/charactertrajectories/processed/train_new.ts", 'w') as outfile:
         for i, line in enumerate(lines):
-            if i < 42:
+            if i < 7:
                 outfile.write(line)
             else:
                 line = line.strip()
@@ -100,7 +100,7 @@ def main():
     
     with open("data/charactertrajectories/processed/test_new.ts", 'w') as outfile:
         for i, line in enumerate(lines):
-            if i < 42:
+            if i < 7:
                 outfile.write(line)
             else:
                 line = line.strip()
