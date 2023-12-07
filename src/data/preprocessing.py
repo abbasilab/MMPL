@@ -92,7 +92,7 @@ def main():
                 line = line.strip()
                 label = line.split(":")[-1]
                 new_label = str(int(label) - 1)
-                new_line = line[:-len(label)] + new_label
+                new_line = line[:-len(label)] + new_label + "\n"
                 outfile.write(new_line)
 
     with open("data/charactertrajectories/processed/test.ts", 'r') as infile:
@@ -106,7 +106,7 @@ def main():
                 line = line.strip()
                 label = line.split(":")[-1]
                 new_label = str(int(label) - 1)
-                new_line = line[:-len(label)] + new_label
+                new_line = line[:-len(label)] + new_label + "\n"
                 outfile.write(new_line)
 
 
