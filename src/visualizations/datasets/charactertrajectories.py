@@ -114,7 +114,7 @@ def visualize_single_variable_prototypes(config, test_ds, save):
         legend_names = config['classes'] + ["Prototype"]
         handles = [plt.Line2D([0], [0], marker='o', color='w', label=legend_names[c],
                        markersize=10, markerfacecolor=colors[c]) for c in classes_with_prototype]
-        fig.legend(handles=handles, ncol=5, loc='lower center')
+        # fig.legend(handles=handles, ncol=5, loc='lower center')
         plt.tight_layout()
         fig.subplots_adjust(bottom=0.1)
 

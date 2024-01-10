@@ -1,5 +1,6 @@
 import argparse
 import math
+import random
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -76,6 +77,22 @@ tab20c = plt.cm.get_cmap('tab20c', 20)
 sixty_colors = list(tab20.colors) + list(tab20b.colors) + list(tab20c.colors)
 
 plt.rcParams['font.family'] = 'Arial'
+plt.rcParams["font.size"] = "10"
+
+def model_input_time_series(save=False):
+    fig, axs = plt.subplots(3, figsize=(8, 8))
+    for data_matrix, labels in epilepsy_train_dl:
+        for i in range(3):
+            sv_data = data_matrix[:, :, i]
+            index = random.randint(0, len(sv_data) - 1)
+            ax = axs[i]
+            ax.plot(sv_data[index, :].detach().numpy(), c=other_colors[i])
+            ax.set_xticks([])
+            ax.set_yticks([])
+    if save:
+        plt.savefig("visualizations/paper/model_input_time_series.svg")
+    plt.show()
+
 
 def simulated_dataset_generation(save=False):
     fig, axs = plt.subplots(4, 3, figsize=(9, 8))
@@ -111,17 +128,17 @@ def simulated_dataset_generation(save=False):
     ax = axs[1, 0]
     shiftone = np.random.randint(0, 55)
     series = np.concatenate([np.zeros(shiftone), g1, np.zeros(5), g2, np.zeros(100 - (shiftone + 45))])
-    ax.plot(series, c=all_colors[0])
+    ax.plot(series, c=all_colors[1])
 
     ax = axs[2, 0]
     shiftone = np.random.randint(0, 55)
     series = np.concatenate([np.zeros(shiftone), g2, np.zeros(5), g1, np.zeros(100 - (shiftone + 45))])
-    ax.plot(series, c=all_colors[0])
+    ax.plot(series, c=all_colors[2])
 
     ax = axs[3, 0]
     shiftone = np.random.randint(0, 55)
     series = np.concatenate([np.zeros(shiftone), g2, np.zeros(5), g2, np.zeros(100 - (shiftone + 45))])
-    ax.plot(series, c=all_colors[0])
+    ax.plot(series, c=all_colors[3])
 
 
     # Variable 2
@@ -130,7 +147,7 @@ def simulated_dataset_generation(save=False):
     ax = axs[0, 1]
     shiftone = np.random.randint(0, 10)
     series = np.concatenate([np.zeros(shiftone), 1.0*g1, np.zeros(100-(shiftone+20))])
-    ax.plot(series, c=all_colors[1])
+    ax.plot(series, c=all_colors[0])
 
     ax = axs[1, 1]
     shiftone = np.random.randint(25, 35)
@@ -140,21 +157,21 @@ def simulated_dataset_generation(save=False):
     ax = axs[2, 1]
     shiftone = np.random.randint(50, 60)
     series = np.concatenate([np.zeros(shiftone), 1.0*g1, np.zeros(100-(shiftone+20))])
-    ax.plot(series, c=all_colors[1])
+    ax.plot(series, c=all_colors[2])
 
     ax = axs[3, 1]
     shiftone = np.random.randint(75, 80)
     series = np.concatenate([np.zeros(shiftone), 1.0*g1, np.zeros(100-(shiftone+20))])
-    ax.plot(series, c=all_colors[1])
+    ax.plot(series, c=all_colors[3])
 
     # Variable 3
     ax = axs[0, 2]
     series = np.sin(0*np.linspace(0, 2 * math.pi,100))
-    ax.plot(series, c=all_colors[2])
+    ax.plot(series, c=all_colors[0])
 
     ax = axs[1, 2]
     series = np.sin(1*np.linspace(0, 2 * math.pi,100) + 2*math.pi)
-    ax.plot(series, c=all_colors[2])
+    ax.plot(series, c=all_colors[1])
 
     ax = axs[2, 2]
     series = np.sin(2*np.linspace(0, 2 * math.pi,100) + 2*math.pi)
@@ -162,7 +179,7 @@ def simulated_dataset_generation(save=False):
 
     ax = axs[3, 2]
     series = np.sin(3*np.linspace(0, 2 * math.pi,100) + 2*math.pi)
-    ax.plot(series, c=all_colors[2])
+    ax.plot(series, c=all_colors[3])
 
     fig.subplots_adjust(hspace=0.5)
 
@@ -176,7 +193,7 @@ def simulated_dataset_example(save=False):
     fig = plt.figure(figsize=(8, 8))
     gs = gridspec.GridSpec(5, 4, height_ratios=[1, 1, 0.01, 1, 1])  # Adjust the 0.1 to reduce the ellipsis row height
     grid_shape = (5, 4)  # 5 rows (4 for data, 1 for ellipsis), 4 columns
-    display_classes = [0, 1, 62, 63]
+    display_classes = [0, 21, 42, 63]
     row_labels = [f"Class {i+1}" for i in display_classes]
     col_labels = [f"Variable {i+1}" for i in range(4)]
     ellipsis_row = 2
@@ -186,13 +203,19 @@ def simulated_dataset_example(save=False):
             for i, class_idx in enumerate(display_classes):
                 row = i if i < ellipsis_row else i + 1  # Adjust row to skip ellipsis row
                 for j in range(4):
+
                     ax = plt.subplot(gs[row, j])  # Use 'row' instead of 'i'
                     ax.set_ylim(-1.5, 1.5)
                     ax.set_yticks([-1, 0, 1])
                     ax.set_xticks([0, 50, 100])
                     axes.append(ax)
-                    
-                    ax.plot(data_matrix[class_idx*100, :, j], c=all_colors[j])
+
+                    if j == 3:
+                        ax.plot(data_matrix[class_idx*100, :, j], c="grey")
+                    else:
+                        patterns = get_single_variable_patterns_from_labels(labels, j)
+                        pattern = int(patterns[class_idx*100])
+                        ax.plot(data_matrix[class_idx*100, :, j], c=all_colors[pattern])
                     
                     if j == 0:
                         ax.set_ylabel(row_labels[i], fontsize=16)
@@ -230,38 +253,37 @@ def simulated_single_variable_prototypes(save=False):
         variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
         pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
 
-        fig, axs = plt.subplots(2, 2, figsize=(8, 8), sharex=True, sharey=True)
+        # Change here: Modified to 1x4 layout
+        fig, axs = plt.subplots(1, 4, figsize=(16, 4), sharex=True, sharey=True)
 
-        for i in range(2):
-            for j in range(2):
-                variable = i*2 + j
+        for i in range(4):
+            # Change here: Adjusted indexing
+            ax = axs[i]
+            ax.set_title(variable_names[i], fontsize=16)
+            ax.set_xticks([])
+            ax.set_yticks([])
 
-                ax = axs[i, j]
-                ax.set_title(variable_names[variable], fontsize=16)
-                ax.set_xticks([])
-                ax.set_yticks([])
+            encoder = simulated_encoders[i]
+            for data_matrix, labels, in simulated_test_dl:
+                single_variable_data = data_matrix[:, :, i].unsqueeze(2).float()
+                embeddings = encoder(single_variable_data)
+                embeddings = torch.concat([embeddings, simulated_sv_prototype_modules.single_variable_prototype_modules[i].prototypes], dim=0)
+                labels = torch.concat([labels, len(classes)*torch.ones((simulated_sv_prototype_modules.single_variable_prototype_modules[i].prototypes.shape[0],))], dim=0)
+                reducer = umap.UMAP()
+                embeddings_2d = reducer.fit_transform(embeddings.cpu())
+                e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
+                embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
 
-                encoder = simulated_encoders[variable]
-                for data_matrix, labels, in simulated_test_dl:
-                    single_variable_data = data_matrix[:, :, variable].unsqueeze(2).float()
-                    embeddings = encoder(single_variable_data)
-                    embeddings = torch.concat([embeddings, simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes], dim=0)
-                    labels = torch.concat([labels, len(classes)*torch.ones((simulated_sv_prototype_modules.single_variable_prototype_modules[variable].prototypes.shape[0],))], dim=0)
-                    reducer = umap.UMAP()
-                    embeddings_2d = reducer.fit_transform(embeddings.cpu())
-                    e_min, e_max = np.min(embeddings_2d, 0), np.max(embeddings_2d, 0)
-                    embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
+                if i == 3:
+                    ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey', s=20.0)
+                else:
+                    for k, label in enumerate(classes):
+                        idx = np.where(labels == label)[0]
+                        pattern = int(class_to_pattern_map[label][i])
+                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2, s=20.0)
 
-                    if variable == 3:
-                        ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')
-                    else:
-                        for k, label in enumerate(classes):
-                            idx = np.where(labels == label)[0]
-                            pattern = int(class_to_pattern_map[label][variable])
-                            ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
-
-                        idx = np.where(labels == len(classes))[0]
-                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', linewidth=1.5, s=200, c=colors[-1])
+                    idx = np.where(labels == len(classes))[0]
+                    ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', linewidth=1.5, s=200, c=colors[-1])
 
         legend_names = pattern_labels + ["Prototype"]
         handles = [plt.Line2D([0], [0], marker='o' if c != 4 else '*', color='w', label=legend_names[c],
@@ -270,12 +292,12 @@ def simulated_single_variable_prototypes(save=False):
         plt.tight_layout()
         fig.subplots_adjust(bottom=0.1)
 
-
     if save:
         save_name = "visualizations/paper/simulated_sv.eps"
         plt.savefig(save_name, dpi=300)
 
     plt.show()
+
 
 def sorting_key(prototype):
     indices = []
@@ -286,7 +308,7 @@ def sorting_key(prototype):
     return tuple(indices)
 
 def simulated_multivariable_prototypes(save):
-    plt.figure()
+    plt.figure(figsize=(8, 8))
     prototypes = simulated_mv_module.prototypes
     prototypes_list = [prototypes[i, :] for i in range(prototypes.shape[0])]
     sorted_prototypes = sorted(prototypes_list, key=sorting_key)
@@ -296,10 +318,17 @@ def simulated_multivariable_prototypes(save):
     for col in range(0, sorted_prototypes_tensor.shape[1], 4):
         ax.axvline(x=col, color='white', lw=2)
 
-    ax.set_xticks([])
-    ax.set_yticks([])
-    ax.set_xticklabels([])
-    ax.set_yticklabels([])
+    # Set the x-ticks for variables
+    x_ticks = [2, 6, 10, 14]
+    ax.set_xticks(x_ticks)
+    ax.set_xticklabels(['Variable 1', 'Variable 2', 'Variable 3', 'Variable 4'], fontsize=16)
+    ax.tick_params(axis='x', length=0)
+
+    # Set the y-ticks for groups
+    y_ticks = [8, 24, 40, 56]
+    ax.set_yticks(y_ticks)
+    ax.set_yticklabels(['Group 1', 'Group 2', 'Group 3', 'Group 4'], fontsize=16)
+    ax.tick_params(axis='y', length=0)
 
     min_val = round(sorted_prototypes_tensor.min().item(), 2)
     max_val = round(sorted_prototypes_tensor.max().item(), 2)
@@ -310,7 +339,7 @@ def simulated_multivariable_prototypes(save):
     cbar.set_ticks([min_val, mid_val, max_val])
 
     if save:
-        save_name = "visualizations/paper/simulated_mv.svg"
+        save_name = "visualizations/paper/simulated_mv.eps"
         plt.savefig(save_name, dpi=300)
     plt.show()
 
@@ -343,7 +372,7 @@ def simulated_projected(save):
                     closest_point = single_variable_data[closest_index].squeeze(1)
                     ax = axs[i, j]
 
-                    ax.plot(closest_point.cpu(), c=all_colors[j])
+                    ax.plot(closest_point.cpu(), c=other_colors[j])
                     
                     # local_min = closest_point.min().item()
                     # local_max = closest_point.max().item()
@@ -378,14 +407,14 @@ def simulated_no_contrastive_single_variable_prototypes(save=False):
         variable_names = ["Variable 1", "Variable 2", "Variable 3", "Variable 4"]
         pattern_labels = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Prototype"]
 
-        fig, axs = plt.subplots(2, 2, figsize=(7, 7), sharex=True, sharey=True)
+        fig, axs = plt.subplots(2, 2, figsize=(8, 8), sharex=True, sharey=True)
 
         for i in range(2):
             for j in range(2):
                 variable = i*2 + j
 
                 ax = axs[i, j]
-                ax.set_title(variable_names[variable])
+                ax.set_title(variable_names[variable], fontsize=16)
                 ax.set_xticks([])
                 ax.set_yticks([])
 
@@ -401,15 +430,15 @@ def simulated_no_contrastive_single_variable_prototypes(save=False):
                     embeddings_2d = (embeddings_2d - e_min) / (e_max - e_min)
 
                     if variable == 3:
-                        ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey')
+                        ax.scatter(embeddings_2d[:, 0], embeddings_2d[:, 1], c='grey', s=5.0)
                     else:
                         for k, label in enumerate(classes):
                             idx = np.where(labels == label)[0]
                             pattern = int(class_to_pattern_map[label][variable])
-                            ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2)
+                            ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label=pattern_labels[pattern], c=colors[pattern], alpha=0.2, s=5.0)
 
                         idx = np.where(labels == len(classes))[0]
-                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', linewidth=1.5, s=120, c=colors[-1])
+                        ax.scatter(embeddings_2d[idx, 0], embeddings_2d[idx, 1], label="Prototype", marker="*", edgecolor='black', linewidth=1.5, s=200, c=colors[-1])
 
         legend_names = pattern_labels + ["Prototype"]
         handles = [plt.Line2D([0], [0], marker='o' if c != 4 else '*', color='w', label=legend_names[c],
@@ -499,6 +528,47 @@ def simulated_accuracy_vs_number_of_clusters(save=False):
     if save:
         save_name = "visualizations/paper/simulated_accuracy.eps"
         plt.savefig(save_name, dpi=300)
+    plt.show()
+
+def simulated_number_of_clusters(save=False):
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+
+    variables = ["Variable 1", "Variable 1", "Variable 3", "Variable 4"]
+    with torch.no_grad():
+        for data_matrix, labels in simulated_train_dl:
+            data_matrix, labels = data_matrix.to(device), labels.to(device)
+            k_values = range(2, 11)
+            all_silhouette_scores = np.zeros((len(k_values), 4))
+            for var in range(4):
+                single_variable_data = data_matrix[:, :, var].unsqueeze(2).float()
+                encoder = simulated_encoders[var].to(device)
+                embeddings = encoder(single_variable_data)
+                embeddings = embeddings.cpu().detach().numpy()
+
+                silhouette_scores = []
+
+                for k in k_values:
+                    kmeans = KMeans(n_clusters=k, random_state=42)
+                    labels = kmeans.fit_predict(embeddings)
+                    score = silhouette_score(embeddings, labels)
+                    silhouette_scores.append(score)
+                all_silhouette_scores[:, var] = silhouette_scores
+                ax1.plot(k_values, all_silhouette_scores[:, var], marker='o', label=variables[var], c=other_colors[var])
+
+    ax1.set_xlabel('Number of Clusters', fontsize=16)
+    ax1.set_ylabel('Silhouette Score', fontsize=16)
+    ax1.legend()
+
+    # Plot 2: Simulated Accuracy vs Number of Clusters
+    num_protos = range(2, 11)
+    accuracies = [0.96953125, 0.99296875, 0.9984375, 0.99875, 0.9990625, 0.99828125, 0.99515625, 0.99765625, 0.9928125]
+    ax2.plot(num_protos, accuracies, c="black", marker='o')
+    ax2.set_xlabel("Number of Univariate Prototypes", fontsize=16)
+    ax2.set_ylabel("Accuracy", fontsize=16)
+
+    # Save or show
+    if save:
+        plt.savefig("visualizations/paper/simulated_number_of_clusters.eps", dpi=300)
     plt.show()
 
 def simulated_one_stage(save=False):
@@ -973,4 +1043,4 @@ if __name__ == "__main__":
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
     args = parser.parse_args()
 
-    basicmotions_projected(save=args.save)
+    simulated_single_variable_prototypes(save=args.save)
