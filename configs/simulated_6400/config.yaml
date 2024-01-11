@@ -145,7 +145,11 @@ encoding:
   save_dir: models/simulated_6400/encoding/
 
 single_variable_prototypes:
-  num_prototypes: 4
+  num_prototypes:
+    - 4
+    - 4
+    - 4
+    - 4
   num_layers: 1
   batch_size: 640
   lr: 0.1

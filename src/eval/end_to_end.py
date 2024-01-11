@@ -110,12 +110,14 @@ def main(args):
         accuracies.append(accuracy)
     
     accuracies = torch.Tensor(accuracies)
-    print(accuracies.mean(), accuracies.std())
+    print(f"Average Accuracy: {accuracies.mean()}")
+    if args.resamples > 1:
+        print(f"Standard Dev: {accuracies.std()}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
-    parser.add_argument("--resamples", type=int, help="Number of resamples")
+    parser.add_argument("--resamples", type=int, default=1, help="Number of resamples")
 
     args = parser.parse_args()
     main(args)

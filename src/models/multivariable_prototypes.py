@@ -13,10 +13,7 @@ class MultivariableModule(torch.nn.Module):
         self.num_layers = num_layers
 
         # One prototype per class
-        if type(self.num_sv_prototypes) == int:
-            self.prototypes = torch.nn.Parameter(torch.rand(num_classes, num_sv_prototypes*num_variables))
-        else:
-            self.prototypes = torch.nn.Parameter(torch.rand(num_classes, sum(num_sv_prototypes)))
+        self.prototypes = torch.nn.Parameter(torch.rand(num_classes, sum(num_sv_prototypes)))
 
         if num_layers == 0:
             self.linear = torch.nn.Identity()

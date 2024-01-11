@@ -24,7 +24,10 @@ encoding:
 
 
 single_variable_prototypes:
-  num_prototypes: 4
+  num_prototypes:
+    - 4
+    - 4
+    - 4
   num_layers: 2
   batch_size: 275
   lr: 0.01

@@ -14,28 +14,18 @@ class ContrastiveLoss(torch.nn.Module):
         data: (batch_size, seq_len, 1)
         labels: (batch_size,)
         """
-        batch_size = data.shape[0]
-
-        # Efficiently compute distances for all pairs
         dist_matrix = torch.norm(data.unsqueeze(1) - data.unsqueeze(0), dim=2)
-
-        # Create masks for same and opposite labels
         labels = labels.unsqueeze(0)
+
         same_labels_mask = (labels == labels.T)
         opposite_labels_mask = (labels != labels.T)
-
-        # Apply masks to distance matrix
         same_distances = dist_matrix * same_labels_mask
         opposite_distances = dist_matrix * opposite_labels_mask
 
-        # Compute losses
         same_loss = 0.5 * torch.sum(same_distances.pow(2))
         opposite_loss = 0.5 * torch.sum(torch.max(torch.zeros_like(opposite_distances), self.m - opposite_distances).pow(2))
 
-        # Sum of same and opposite losses
-        final = same_loss + opposite_loss
-
-        return final
+        return same_loss + opposite_loss
     
 class Encoder(torch.nn.Module):
     """

@@ -31,7 +31,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, help="Name of the dataset (e.g. <basicmotions>)")
-    parser.add_argument("--type", type=str, help="What do you want to visualize? single-var, multi-var")
+    parser.add_argument("--type", type=str, help="What do you want to visualize? latent-space, single-var, multi-var, projected")
     parser.add_argument("--save", action=argparse.BooleanOptionalAction, default=False, help="Whether to save the figure or not")
 
     args = parser.parse_args()

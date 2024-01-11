@@ -59,7 +59,6 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
         """
         with torch.no_grad():
             # Iterate through the variables
-            count = 0
             for data_matrix, _ in self.full_train_dataloader:
                 data_matrix = data_matrix.to(device)
                 for i in range(self.num_variables):
@@ -72,10 +71,7 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
                     index = random.randint(0, len(encodings) - 1)
                     prototypes[0] = encodings[index]
                     chosen_indices.append(index)
-                    if type(self.num_prototypes) == int:
-                        end = self.num_prototypes
-                    else:
-                        end = self.num_prototypes[i]
+                    end = self.num_prototypes[i]
                     for j in range(1, end):
                         # Step 2: For each data point calculate distance to each chosen prototype
                         # Keep distance to closest chosen prototype
@@ -163,8 +159,6 @@ class SingleVariablePrototypesTrainer(torch.nn.Module):
             min_distances = torch.min(distances, dim=0).values
             sim = torch.sum(min_distances)
             total_penalty += sim
-        if type(self.num_prototypes) == int:
-            return total_penalty / self.num_prototypes
 
         return total_penalty / sum(self.num_prototypes)
     

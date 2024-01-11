@@ -67,6 +67,9 @@ class EncoderTrainer(torch.nn.Module):
         plt.show()
 
     def plot_latent_spaces(self, use_test=False):
+        """
+        UMAP visualization of learned latent spaces.
+        """
         dl = self.train_dataloader
         if use_test:
             dl = self.test_dataloader
